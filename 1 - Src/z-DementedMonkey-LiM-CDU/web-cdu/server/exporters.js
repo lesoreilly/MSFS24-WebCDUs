@@ -10,18 +10,10 @@ const path = require('path');
 const { spawn } = require('child_process');
 const keySim = require('./lim_key_simconnect');
 
-const DEFAULT_MF_DIR = path.join(
-  process.env.LOCALAPPDATA || '',
-  'MobiFlight',
-  'MobiFlight Connector'
-);
-
 /** ATR screen module, when ms_atr_core.pyd has been copied into this folder. */
 const BUNDLED_SCRIPT_DIR = path.join(__dirname, 'readers');
-/** Optional local copy, used only if the bundled readers are missing. */
-const DEFAULT_SCRIPT_DIR = path.join('D:', 'zzMods', '0 - Other References', 'mobiflightExpPy');
 
-/** Known MSFS exporters: script name under Scripts/Winwing + default planeTag. */
+/** Screen readers. planeTag is the WinCtrl protocol name. */
 const EXPORTERS = {
   atr: {
     script: 'ms_atr_42_72_winwing_cdu.py',
@@ -65,19 +57,6 @@ const EXPORTERS = {
   },
 };
 
-function resolveMfDir(override) {
-  const candidates = [];
-  if (override) candidates.push(override);
-  if (process.env.LIM_MOBIFLIGHT_DIR) candidates.push(process.env.LIM_MOBIFLIGHT_DIR);
-  candidates.push(DEFAULT_MF_DIR);
-  for (const dir of candidates) {
-    if (!dir) continue;
-    if (fs.existsSync(path.join(dir, 'Python', '3.14.2', 'python.exe'))) return dir;
-    if (fs.existsSync(path.join(dir, 'Scripts', 'Winwing'))) return dir;
-  }
-  return null;
-}
-
 function scriptDirHasAtr(dir) {
   return !!(dir && fs.existsSync(path.join(dir, 'ms_atr_core.cp314-win_amd64.pyd')));
 }
@@ -87,42 +66,13 @@ function bundledPythonExe() {
   return fs.existsSync(exe) ? exe : null;
 }
 
-/** Bundled readers first, then the references copy, then Connector Scripts/Winwing. */
-function resolveScriptDir(mfDir) {
+/** ATR module lives next to the hub. Nothing is read from an outside install. */
+function resolveScriptDir() {
   const candidates = [];
   if (process.env.LIM_WINCTRL_SCRIPTS) candidates.push(process.env.LIM_WINCTRL_SCRIPTS);
   candidates.push(BUNDLED_SCRIPT_DIR);
-  candidates.push(DEFAULT_SCRIPT_DIR);
-  if (mfDir) candidates.push(path.join(mfDir, 'Scripts', 'Winwing'));
   for (const dir of candidates) {
     if (scriptDirHasAtr(dir)) return dir;
-  }
-  return null;
-}
-
-function resolveMfPython(mfDir) {
-  const bundled = bundledPythonExe();
-  if (bundled) return bundled;
-  const candidates = [
-    path.join(mfDir, 'Python', '3.14.2', 'python.exe'),
-    path.join(mfDir, 'python', '3.14.2', 'python.exe'),
-    path.join(mfDir, 'Python', 'python.exe'),
-  ];
-  // Prefer newest 3.14.x under Python/
-  const pyRoot = path.join(mfDir, 'Python');
-  if (fs.existsSync(pyRoot)) {
-    try {
-      const vers = fs.readdirSync(pyRoot)
-        .filter((n) => /^3\./.test(n))
-        .sort()
-        .reverse();
-      for (const v of vers) {
-        candidates.unshift(path.join(pyRoot, v, 'python.exe'));
-      }
-    } catch (_e) { /* ignore */ }
-  }
-  for (const exe of candidates) {
-    if (exe && fs.existsSync(exe)) return exe;
   }
   return null;
 }
@@ -179,10 +129,10 @@ function directWinCtrlForTitle(title) {
 }
 
 /**
- * @param {{ exporterList: string, mobiFlightDir?: string, log?: Function }} opts
- * @returns {{ children: import('child_process').ChildProcess[], planeTags: string[], mfDir: string|null, errors: string[] }}
+ * @param {{ exporterList: string, log?: Function }} opts
+ * @returns {{ children: import('child_process').ChildProcess[], planeTags: string[], errors: string[] }}
  */
-function mfPythonEnv(mfDir, pythonExe) {
+function mfPythonEnv(pythonExe) {
   const packages = path.join(path.dirname(pythonExe), 'packages');
   const env = Object.assign({}, process.env, { PYTHONUNBUFFERED: '1' });
   if (fs.existsSync(packages)) {
@@ -199,7 +149,6 @@ function startExporters(opts) {
     children: [],
     readers: [],
     planeTags: [],
-    mfDir: null,
     errors: [],
     keyBridge: null,
     auto: auto,
@@ -208,11 +157,9 @@ function startExporters(opts) {
   };
   if (!names.length) return result;
 
-  const mfDir = resolveMfDir(opts.mobiFlightDir || '');
-  result.mfDir = mfDir;
-  const python = resolveMfPython(mfDir);
-  const env = python ? mfPythonEnv(mfDir || path.dirname(python), python) : process.env;
-  const scriptDir = resolveScriptDir(mfDir);
+  const python = bundledPythonExe();
+  const env = python ? mfPythonEnv(python) : process.env;
+  const scriptDir = resolveScriptDir();
   const winPort = Number(opts.winCtrlPort) || 8320;
 
   function track(name, child) {
@@ -450,8 +397,6 @@ module.exports = {
   parseExporterList,
   exporterForTitle,
   directWinCtrlForTitle,
-  resolveMfDir,
-  resolveMfPython,
   resolveScriptDir,
   startExporters,
   stopExporters,

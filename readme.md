@@ -2,7 +2,7 @@
 
 Web CDU for Microsoft Flight Simulator 2024. Modified from [dementedmonkey/cj4-mcdu](https://github.com/dementedmonkey/cj4-mcdu) 0.10.0. This fork stays under GPL-3. See `LICENSE`. The package name credits Demented Monkey and LiM together.
 
-Release 2.0.0. The sim package is `z-DementedMonkey-LiM-CDU-v2.0.0`. MSFS 2024 and MSFS 2020 each have their own zip. The browser hub is Node, started with `web-cdu/start-web-cdu.cmd`. There is no packaged exe. Ports live in `web-cdu/cdu-server.cfg`.
+Release 2.0.1. The sim package is `z-DementedMonkey-LiM-CDU-v2.0.1`. MSFS 2024 and MSFS 2020 each have their own zip. The browser hub is Node, started with `web-cdu/start-web-cdu.cmd`. There is no packaged exe. Ports live in `web-cdu/cdu-server.cfg`.
 
 The browser faces are HTML and CSS. Install, the WEBSOCKETS pages, and the relay are in `0 - DocsFolder/USER-MANUAL.md`. Build steps are in `0 - DocsFolder/BUILD-PIPELINE.md`.
 

@@ -45,7 +45,6 @@ function readCfg(file) {
     winCtrlPlaneTag: 'auto',
     winCtrlAircraft: '',
     winCtrlExporter: 'auto',
-    mobiFlightDir: '',
   };
   if (!fs.existsSync(file)) {
     return cfg;
@@ -66,7 +65,6 @@ function readCfg(file) {
     if (key === 'winCtrlPlaneTag' || key === 'winCtrlTag') cfg.winCtrlPlaneTag = value;
     if (key === 'winCtrlAircraft') cfg.winCtrlAircraft = value;
     if (key === 'winCtrlExporter' || key === 'winCtrlExporters') cfg.winCtrlExporter = value;
-    if (key === 'mobiFlightDir' || key === 'mobiflightDir') cfg.mobiFlightDir = value;
   }
   return cfg;
 }
@@ -94,7 +92,6 @@ let winCtrlAircraft = String(process.env.LIM_WINCTRL_AIRCRAFT || cfg.winCtrlAirc
 let observedAircraft = '';
 let observedLivery = '';
 let winCtrlExporter = String(process.env.LIM_WINCTRL_EXPORTER || cfg.winCtrlExporter || '').trim();
-let mobiFlightDir = String(process.env.LIM_MOBIFLIGHT_DIR || cfg.mobiFlightDir || '').trim();
 let exporterChildren = [];
 let exporterLabels = [];
 let exporterHost = null;
@@ -111,12 +108,11 @@ for (const arg of process.argv.slice(2)) {
   else if (arg.startsWith('--winctrl-plane-tag=')) winCtrlPlaneTag = arg.split('=').slice(1).join('=') || winCtrlPlaneTag;
   else if (arg.startsWith('--winctrl-aircraft=')) winCtrlAircraft = arg.split('=').slice(1).join('=') || winCtrlAircraft;
   else if (arg.startsWith('--winctrl-exporter=')) winCtrlExporter = arg.split('=').slice(1).join('=') || winCtrlExporter;
-  else if (arg.startsWith('--mobiflight-dir=')) mobiFlightDir = arg.split('=').slice(1).join('=') || mobiFlightDir;
   else if (arg === '--help' || arg === '-h') {
     console.log('node index.js [--http-port=N] [--sim-port=N] [--relay-port=N] [--relay-ip=ADDR]');
     console.log('             [--winctrl-port=N] [--winctrl-exporter=auto]');
     console.log('relay-port=0 disables the hardware relay.');
-    console.log('winctrl-port=0 disables WinCtrl ingest. The MobiFlight port is 8320.');
+    console.log('winctrl-port=0 disables WinCtrl ingest. The WinCtrl port is 8320.');
     console.log('winctrl-exporter=auto follows the loaded aircraft. off turns readers off.');
     console.log('SPAD listens on relay-ip:relay-port. This hub connects out and speaks as the plane.');
     process.exit(0);
@@ -732,7 +728,6 @@ function startConfiguredExporters() {
   if (!winCtrlPort || !winCtrlExporter) return;
   const started = exporters.startExporters({
     exporterList: winCtrlExporter,
-    mobiFlightDir,
     winCtrlPort,
     log: console.log,
     onAtrExec: publishAtrExec,

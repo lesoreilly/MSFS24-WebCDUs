@@ -1,3 +1,12 @@
+# Release 2.0.1
+
+The Community package is `z-DementedMonkey-LiM-CDU-v2.0.1`.
+
+## What is new in 2.0.1
+
+- The hub no longer looks for a remote python install. Starting without python no longer fails with `ERR_INVALID_ARG_TYPE`.
+- If antivirus removes `web-cdu/runtime/python/python.exe`, the hub stays up. The PMDG, CRJ, 757, and in-sim screens do not use that file.
+
 # Release 2.0.0
 
 The Community package is `z-DementedMonkey-LiM-CDU-v2.0.0`.
@@ -37,7 +46,7 @@ The LiM Charts plugin stays. It installs beside this package and the two run tog
 
 ## Install
 
-Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.0`.
+Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.1`.
 
 Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 

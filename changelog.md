@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.1 — 2026-10-27
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.1`.
+
+- The hub no longer looks for a remote python install. Starting without local python no longer fails with `ERR_INVALID_ARG_TYPE`.
+- If antivirus removes `web-cdu/runtime/python/python.exe`, the hub stays up. The PMDG, CRJ, 757, and in-sim screens do not use that file.
+
 ## 2.0.0 — 2026-10-26
 
 The package folder is `z-DementedMonkey-LiM-CDU-v2.0.0`.
