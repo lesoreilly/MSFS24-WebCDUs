@@ -20,7 +20,7 @@ This package replaces the older Demented Monkey CDU mods and the separate LiM 74
 
 The LiM Charts plugin stays. It installs beside this package and the two run together.
 
-Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v1.0.2`. Double-click `web-cdu/start-web-cdu.cmd` and leave that window open while you fly. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
+Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.0`. Double-click `web-cdu/start-web-cdu.cmd` and leave that window open while you fly. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 
 The hub prints a local URL and a LAN URL. Open one of them in a browser on this PC or on a tablet on the same network. The screen stays dark until the CDU in the aircraft has power.
 
@@ -36,10 +36,24 @@ Defaults are in `web-cdu/cdu-server.cfg`:
 | `simPort` | 8088 | Sim and browser websocket |
 | `relayIp` | 127.0.0.1 | PC where SPAD is listening |
 | `relayPort` | 8089 | SPAD websocket. `0` turns the relay off |
+| `winCtrlPort` | 8320 | MobiFlight Format WinCtrl port. `0` turns it off |
+| `winCtrlExporter` | `auto` | `auto` follows the loaded aircraft. `off` turns the readers off |
 
 The sim and the browser connect in to `simPort`. On the aircraft WEBSOCKETS page, set the IP to `127.0.0.1` and the port to `simPort` when the sim and the hub are on the same PC.
 
 SPAD listens on `relayPort`. The hub connects out to `relayIp:relayPort` and speaks as the plane: `mcduConnected`, then the same screen updates. Set `relayIp` to the other PC's address when SPAD is not on this machine. SPAD has to be listening before the hub can connect. The hub retries every couple of seconds.
+
+## WinCtrl ingest (MSFS only)
+
+The hub listens on the MobiFlight Format WinCtrl port:
+
+`ws://127.0.0.1:8320/winwing/cdu-captain` (also `cdu-co-pilot`, `cdu-observer`)
+
+That port is 8320. Set `winCtrlPort=0` to turn it off. Do not run MobiFlight Connector as the WinCtrl server on the same PC while it is on. Both want port 8320.
+
+`winCtrlExporter=auto` reads the sim aircraft title and starts the matching screen reader. Set `winCtrlExporter=off` to leave the readers off. The aircraft name and the screen type come from that title. There is no tag or aircraft name to set in `cdu-server.cfg`.
+
+Planes with a LiM WEBSOCKETS page (CJ4, King Air, P180, Hawker, Citation X, 737, 747, 707, Saab 340) do not use a reader. When one of those is connected on `simPort`, that feed is the one the browser and SPAD see.
 
 ## WEBSOCKETS page
 

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PMDG 777 CDU</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="stylesheet" href="cdu-737.css?v=20261011-45" />
+  <style>
+    :root {
+      --key: #16130f;
+      --key-hi: #2c261e;
+      --legend: #e7f3df;
+    }
+    .plate {
+      letter-spacing: 0.06em;
+      font-size: calc(0.11 * var(--inch));
+      white-space: nowrap;
+      color: #f4eadc;
+    }
+    .unit {
+      border-color: #4a3b2e;
+      background: linear-gradient(180deg, #b08a66 0%, #8a6848 36%, #5e4632 100%);
+      box-shadow:
+        0 18px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 232, 206, 0.35),
+        inset 0 -8px 16px rgba(40, 24, 12, 0.28);
+    }
+    .fastener {
+      box-shadow:
+        0 0 0 2px #3a2c22,
+        0 0 0 3px #8d6b4a,
+        inset 0 1px 1px rgba(255, 255, 255, 0.7),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.45);
+    }
+    .screen-bezel {
+      background: linear-gradient(180deg, #6b5340 0%, #8d6e50 24%, #7a5c42 100%);
+      box-shadow:
+        inset 0 calc(1.6 * var(--px)) calc(2.6 * var(--px)) rgba(40, 24, 12, 0.45),
+        0 0 0 1px rgba(90, 64, 42, 0.45);
+    }
+    .lsk {
+      background: linear-gradient(180deg, #3a3228 0%, #221c16 55%, #14110e 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 0 #6a5340;
+      overflow: visible;
+    }
+    .lsks {
+      position: relative;
+      z-index: 3;
+      overflow: visible;
+    }
+    .lsk::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      width: calc(7.8 * var(--px) - 2px);
+      height: calc(0.95 * var(--px));
+      background: #f7f7f4;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .lsks.left .lsk::before { left: calc(100% + 1.2 * var(--px) + 2px); }
+    .lsks.right .lsk::before { right: calc(100% + 1.2 * var(--px)); }
+    .fn button,
+    .menu-pair button,
+    .alpha button,
+    .numpad button,
+    .brt {
+      box-shadow: inset 0 1px 0 rgba(255, 236, 210, 0.16), 0 2px 0 #4a3828;
+    }
+    .numpad button {
+      box-shadow: inset 0 1px 0 rgba(255, 236, 210, 0.16), 0 2px 0 #4a3828;
+    }
+    .side button {
+      border-color: #3a2e24;
+      background: #6d5340;
+      color: #f6eee4;
+    }
+    .side button.on {
+      background: #2a211a;
+      color: #fff;
+    }
+    .ann { color: #6e5c4c; }
+    .ann[data-ann="fail"].lit {
+      color: #ff7a1a;
+      text-shadow: 0 0 6px rgba(255, 122, 26, 0.9), 0 0 2px #ff7a1a;
+    }
+    [data-key="EXEC"] .lamp { background: #2a241c; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="unit" id="unit">
+      <span class="fastener fastener-tl" aria-hidden="true"></span>
+      <span class="fastener fastener-tr" aria-hidden="true"></span>
+      <span class="fastener fastener-bl" aria-hidden="true"></span>
+      <span class="fastener fastener-br" aria-hidden="true"></span>
+
+      <header class="eyebrow">
+        <span class="eyebrow-spacer" aria-hidden="true"></span>
+        <div class="plate">PMDG 777 CDU</div>
+        <div class="side-wrap">
+          <span id="status" class="status disconnected">NO LINK</span>
+          <div class="side" role="group" aria-label="CDU side">
+            <button type="button" id="side-capt" data-side="1" class="on">CPT</button>
+            <button type="button" id="side-fo" data-side="2">FO</button>
+            <button type="button" id="side-both" data-side="both">BOTH</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="face">
+        <div class="lsks left" aria-label="Left line select keys">
+          <span></span><span></span>
+          <button type="button" class="lsk" data-key="L1" aria-label="LSK 1L"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="L2" aria-label="LSK 2L"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="L3" aria-label="LSK 3L"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="L4" aria-label="LSK 4L"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="L5" aria-label="LSK 5L"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="L6" aria-label="LSK 6L"></button>
+          <span></span>
+        </div>
+
+        <div class="screen-bezel">
+          <div id="screen" class="screen" aria-label="CDU screen"></div>
+        </div>
+
+        <div class="lsks right" aria-label="Right line select keys">
+          <span></span><span></span>
+          <button type="button" class="lsk" data-key="R1" aria-label="LSK 1R"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="R2" aria-label="LSK 2R"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="R3" aria-label="LSK 3R"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="R4" aria-label="LSK 4R"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="R5" aria-label="LSK 5R"></button>
+          <span></span>
+          <button type="button" class="lsk" data-key="R6" aria-label="LSK 6R"></button>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="deck">
+        <div class="fn" aria-label="Mode keys">
+          <button type="button" data-key="INIT"><span>INIT</span><span>REF</span></button>
+          <button type="button" data-key="RTE">RTE</button>
+          <button type="button" data-key="DEPARR"><span>DEP</span><span>ARR</span></button>
+          <button type="button" data-key="ALTN">ALTN</button>
+          <button type="button" data-key="VNAV">VNAV</button>
+          <label class="brt" title="Screen brightness, this page only">
+            <span>-BRT+</span>
+            <input id="brt" type="range" min="35" max="140" value="100" />
+          </label>
+          <button type="button" data-key="FIX">FIX</button>
+          <button type="button" data-key="LEGS">LEGS</button>
+          <button type="button" data-key="HOLD">HOLD</button>
+          <button type="button" data-key="FMCCOMM"><span>FMC</span><span>COMM</span></button>
+          <button type="button" data-key="PROG">PROG</button>
+          <button type="button" id="exec-key" data-key="EXEC"><span class="lamp" aria-hidden="true"></span><span>EXEC</span></button>
+        </div>
+
+        <div class="keydeck">
+          <div class="ann-col ann-left">
+            <div class="ann" data-ann="dspy" aria-label="DSPY">
+              <span>D</span><span>S</span><span>P</span><span>Y</span>
+            </div>
+            <div class="ann" data-ann="fail" aria-label="FAIL">
+              <span>F</span><span>A</span><span>I</span><span>L</span>
+            </div>
+          </div>
+
+          <div class="keys">
+            <div class="menu-pair">
+              <button type="button" data-key="MENU">MENU</button>
+              <button type="button" data-key="NAVRAD"><span>NAV</span><span>RAD</span></button>
+              <button type="button" data-key="PREVPAGE"><span>PREV</span><span>PAGE</span></button>
+              <button type="button" data-key="NEXTPAGE"><span>NEXT</span><span>PAGE</span></button>
+            </div>
+            <div class="numpad" aria-label="Numeric keys">
+              <button type="button" data-key="1">1</button>
+              <button type="button" data-key="2">2</button>
+              <button type="button" data-key="3">3</button>
+              <button type="button" data-key="4">4</button>
+              <button type="button" data-key="5">5</button>
+              <button type="button" data-key="6">6</button>
+              <button type="button" data-key="7">7</button>
+              <button type="button" data-key="8">8</button>
+              <button type="button" data-key="9">9</button>
+              <button type="button" data-key="DOT" aria-label="Decimal"><span>.</span></button>
+              <button type="button" data-key="0">0</button>
+              <button type="button" data-key="PLUSMINUS" aria-label="Plus minus">+/-</button>
+            </div>
+            <div class="alpha" aria-label="Alphabetic keys">
+              <button type="button" data-key="A">A</button>
+              <button type="button" data-key="B">B</button>
+              <button type="button" data-key="C">C</button>
+              <button type="button" data-key="D">D</button>
+              <button type="button" data-key="E"><span>E</span></button>
+              <button type="button" data-key="F">F</button>
+              <button type="button" data-key="G">G</button>
+              <button type="button" data-key="H">H</button>
+              <button type="button" data-key="I">I</button>
+              <button type="button" data-key="J">J</button>
+              <button type="button" data-key="K">K</button>
+              <button type="button" data-key="L">L</button>
+              <button type="button" data-key="M">M</button>
+              <button type="button" data-key="N"><span>N</span></button>
+              <button type="button" data-key="O">O</button>
+              <button type="button" data-key="P">P</button>
+              <button type="button" data-key="Q">Q</button>
+              <button type="button" data-key="R">R</button>
+              <button type="button" data-key="S"><span>S</span></button>
+              <button type="button" data-key="T">T</button>
+              <button type="button" data-key="U">U</button>
+              <button type="button" data-key="V">V</button>
+              <button type="button" data-key="W"><span>W</span></button>
+              <button type="button" data-key="X">X</button>
+              <button type="button" data-key="Y">Y</button>
+              <button type="button" data-key="Z">Z</button>
+              <button type="button" data-key="SP" aria-label="Space">SP</button>
+              <button type="button" data-key="DEL">DEL</button>
+              <button type="button" data-key="DIV" aria-label="Slash">/</button>
+              <button type="button" id="clr-key" data-key="CLR">CLR</button>
+            </div>
+          </div>
+
+          <div class="ann-col ann-right">
+            <div class="ann" data-ann="msg" aria-label="MSG">
+              <span>M</span><span>S</span><span>G</span>
+            </div>
+            <div class="ann" data-ann="ofst" aria-label="OFST">
+              <span>O</span><span>F</span><span>S</span><span>T</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>window.LIM_WS_PORT = __LIM_WS_PORT__;</script>
+  <script src="lim-route.js?v=20261021-777"></script>
+  <script src="cdu-pmdg777.js?v=20261021-777"></script>
+</body>
+</html>

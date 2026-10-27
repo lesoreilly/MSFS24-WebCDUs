@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.0.0 — 2026-10-26
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.0`.
+
+- PMDG 737 face and keys. The plate is PMDG 737 CDU.
+- PMDG 777 face and keys. The plate is PMDG 777 CDU.
+- BlueBird 757 face and keys. The plate is BBS 757 CDU.
+- Aerosoft CRJ face and keys. The plate is CRJ.
+- iFly 737 screen on the FANS 2/B 737 face. The plate is iFly 737 CDU. Key presses are not connected yet.
+- iniBuilds A300 stays a screen passthrough. There is no bezel yet.
+- `cdu-server.cfg` is the browser port, the sim port, the SPAD relay, WinCtrl port 8320, and `winCtrlExporter`. `0` turns the relay or WinCtrl off. `winCtrlExporter=auto` follows the loaded aircraft.
+
+## 1.0.2 — 2026-10-25
+
+- Browser face routing fixes so the 747, 737, and UNS pages open from the hub URL.
+- Separate 747-400 CRT face for the LCF and GST. The 747-8 keeps the tan face. Routing uses ATC MODEL (`744` vs `748`).
+- Hawker and CJ4 LSK pitch tweaks.
+- Release minify leaves `WTUns1.js` unminified so the UNS instrument still runs in Coherent GT.
+
 ## 1.0.1 — 2026-10-15
 
 - `start-web-cdu.cmd` downloads a portable Node.js into `web-cdu/runtime/` when Node is not already on the PC.

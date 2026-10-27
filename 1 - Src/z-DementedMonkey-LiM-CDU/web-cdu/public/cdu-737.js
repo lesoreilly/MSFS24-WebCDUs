@@ -1,7 +1,16 @@
 (function () {
   const ROWS = 14;
   const COLS = 24;
-  const PROTOCOL = 'wt737';
+  /** Native LiM 737, or any WinCtrl-ingested wt737/<planeTag> except uns1 / wt747. */
+  let protocol = 'wt737';
+
+  function acceptsProtocol(fmcType) {
+    const t = String(fmcType || '');
+    if (t === 'wt737') return true;
+    if (t.indexOf('wt737/') !== 0) return false;
+    if (t === 'wt737/wt747' || t === 'wt737/uns1' || t === 'wt737/atr' || t === 'wt737/pmdg737' || t === 'wt737/pmdg777' || t === 'wt737/ascrj' || t === 'wt737/bb757') return false;
+    return true;
+  }
 
   const app = document.querySelector('.app');
   const captUnit = document.getElementById('unit');
@@ -177,7 +186,7 @@
     bothBtn.classList.toggle('on', both);
     app.classList.toggle('both', both);
     foUnit.hidden = !both;
-    if (captPlate) captPlate.textContent = both ? 'CAPT' : '737 CDU';
+    if (captPlate) captPlate.textContent = both ? 'CAPT' : (protocol === 'wt737/ifly737' ? 'iFly 737 CDU' : '737 CDU');
     try { localStorage.setItem('lim737-cdu-side', both ? 'both' : String(side)); } catch (_) { /* ignore */ }
     repaint();
   }
@@ -218,7 +227,7 @@
     playClick();
     const target = which || activeSide;
     if (!socket || socket.readyState !== WebSocket.OPEN || !name) return;
-    socket.send('event:' + PROTOCOL + ':' + target + ':' + name);
+    socket.send('event:' + protocol + ':' + target + ':' + name);
   }
 
   function flash(key, unit) {
@@ -249,10 +258,15 @@
           LIM_maybeRedirect(raw, { screen: both ? 'both' : String(side) })) {
         return;
       }
-      const prefix = 'update:' + PROTOCOL + ':';
-      if (raw.indexOf(prefix) !== 0) return;
+      if (raw.indexOf('update:') !== 0) return;
+      const colon = raw.indexOf(':', 7);
+      if (colon < 0) return;
+      const fmcType = raw.slice(7, colon);
+      if (!acceptsProtocol(fmcType)) return;
+      protocol = fmcType;
+      if (captPlate && !both) captPlate.textContent = protocol === 'wt737/ifly737' ? 'iFly 737 CDU' : '737 CDU';
       try {
-        applyUpdate(JSON.parse(raw.slice(prefix.length)));
+        applyUpdate(JSON.parse(raw.slice(colon + 1)));
       } catch (_) { /* ignore */ }
     };
 

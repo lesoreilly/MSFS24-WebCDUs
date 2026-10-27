@@ -1,6 +1,20 @@
+# Release 2.0.0
+
+The Community package is `z-DementedMonkey-LiM-CDU-v2.0.0`.
+
+## What is new in 2.0.0
+
+- PMDG 737 face and keys. The plate is **PMDG 737 CDU**.
+- PMDG 777 face and keys. The plate is **PMDG 777 CDU**.
+- BlueBird 757 face and keys. The plate is **BBS 757 CDU**.
+- Aerosoft CRJ face and keys. The plate is **CRJ**.
+- iFly 737 screen on the FANS 2/B 737 face, plate **iFly 737 CDU**. Key presses are not connected yet.
+- iniBuilds A300 stays a screen passthrough. There is no bezel yet.
+
 # Release 1.0.2
 
 Web CDU for Microsoft Flight Simulator. Modified from [dementedmonkey/cj4-mcdu](https://github.com/dementedmonkey/cj4-mcdu) 0.10.0, GPL-3. The Community package is `z-DementedMonkey-LiM-CDU-v1.0.2`.
+Pull Request to Pull back into the Original Project submitted.
 
 ## What is new in 1.0.2
 
@@ -23,7 +37,7 @@ The LiM Charts plugin stays. It installs beside this package and the two run tog
 
 ## Install
 
-Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v1.0.2`.
+Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.0`.
 
 Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 

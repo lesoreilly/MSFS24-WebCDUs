@@ -50,6 +50,20 @@ function vendorWebCduRuntime(destPkg) {
   }
   fs.cpSync(path.join(wsSrc, 'lib'), path.join(dest, 'lib'), { recursive: true });
   console.log('  Vendored web-cdu/node_modules/ws');
+
+  const koffiSrc = path.join(ROOT, 'node_modules', 'koffi');
+  const koffiNative = path.join(ROOT, 'node_modules', '@koromix', 'koffi-win32-x64');
+  if (!fs.existsSync(path.join(koffiSrc, 'index.js')) || !fs.existsSync(koffiNative)) {
+    throw new Error('Missing node_modules/koffi or @koromix/koffi-win32-x64. Run npm install before building.');
+  }
+  const koffiDest = path.join(webDir, 'node_modules', 'koffi');
+  fs.rmSync(koffiDest, { recursive: true, force: true });
+  fs.cpSync(koffiSrc, koffiDest, { recursive: true });
+  const nativeDest = path.join(webDir, 'node_modules', '@koromix', 'koffi-win32-x64');
+  fs.rmSync(nativeDest, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(nativeDest), { recursive: true });
+  fs.cpSync(koffiNative, nativeDest, { recursive: true });
+  console.log('  Vendored web-cdu/node_modules/koffi');
 }
 
 function installCommunityPackage(communityDir, src, folderName, pkg) {

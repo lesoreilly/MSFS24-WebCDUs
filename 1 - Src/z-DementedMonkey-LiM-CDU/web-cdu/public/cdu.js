@@ -96,6 +96,12 @@
       return unsFace === '5in' ? 'uns5' : 'uns4';
     }
     if (fmcType === 'wt737') return 'wt737';
+    if (fmcType === 'wt737/atr') return 'atr';
+    // WinCtrl ingest / per-plane tags (wt737/fenix, wt737/pmdg737, …)
+    if (fmcType && fmcType.indexOf('wt737/') === 0 &&
+        fmcType !== 'wt737/wt747' && fmcType !== 'wt737/uns1' && fmcType !== 'wt737/atr') {
+      return 'wt737';
+    }
     if (fmcType === 'wt21') {
       // These four keep their own faces. Their screens are edited separately.
       if (/H25B|H25|HAWKER|800XP/.test(name)) return 'hawker';
@@ -306,7 +312,51 @@
       window.location.replace(page + '?' + params.toString());
       return;
     }
-    if (fmcType === 'wt737') {
+    if (fmcType === 'wt737/atr') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('atr.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737/ascrj') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('crj.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737/bb757') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('757.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737/pmdg777') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('pmdg777.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737/pmdg737') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('pmdg737.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737/ifly737') {
+      const screen = both ? 'both' : String(side);
+      const params = new URLSearchParams(window.location.search);
+      params.set('screen', screen);
+      window.location.replace('737.html?' + params.toString());
+      return;
+    }
+    if (fmcType === 'wt737' ||
+        (fmcType && fmcType.indexOf('wt737/') === 0 &&
+         fmcType !== 'wt737/wt747' && fmcType !== 'wt737/uns1' && fmcType !== 'wt737/atr' && fmcType !== 'wt737/ascrj' && fmcType !== 'wt737/bb757')) {
       const screen = both ? 'both' : String(side);
       const params = new URLSearchParams(window.location.search);
       params.set('screen', screen);

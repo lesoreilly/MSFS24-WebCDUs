@@ -4,3 +4,4 @@
 /version
 /node_modules/
 **/web-cdu/runtime/
+/.local/

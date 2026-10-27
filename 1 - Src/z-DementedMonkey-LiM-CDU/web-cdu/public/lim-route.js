@@ -5,12 +5,31 @@
     return /B744|AC_MODEL_B744|\b744\b|LCF|GST|BLCF|WTBLCF|WTB744/.test(name);
   }
 
+  function is737FamilyProtocol(fmcType) {
+    const t = String(fmcType || '');
+    if (t === 'wt737') return true;
+    if (t.indexOf('wt737/') !== 0) return false;
+    // Dedicated faces — not the generic 737 bezel
+    if (t === 'wt737/wt747' || t === 'wt737/uns1' || t === 'wt737/atr' || t === 'wt737/pmdg737' || t === 'wt737/pmdg777' || t === 'wt737/ascrj' || t === 'wt737/bb757') return false;
+    return true;
+  }
+
   function pageForProtocol(fmcType, aircraft) {
     if (fmcType === 'wt737/wt747') {
       return is747Classic(aircraft) ? '747-400.html' : '747.html';
     }
     if (fmcType === 'wt737/uns1') return 'uns.html';
-    if (fmcType === 'wt737') return '737.html';
+    if (fmcType === 'wt737/atr') return 'atr.html';
+    if (fmcType === 'wt737/ascrj') return 'crj.html';
+    if (fmcType === 'wt737/bb757') return '757.html';
+    if (fmcType === 'wt737/pmdg737') return 'pmdg737.html';
+    if (fmcType === 'wt737/pmdg777') return 'pmdg777.html';
+    // iFly 737 MAX uses the FANS 2/B legend set on 737.html
+    // (DEP ARR, ATC, VNAV, FIX, HOLD, FMC COMM, MENU, N1 LIMIT).
+    // pmdg737.html boots in FANS 1/A (CLB / CRZ / DES) and follows L:cduOptions.
+    if (fmcType === 'wt737/ifly737') return '737.html';
+    // Native 737 and WinCtrl-ingested wt737/<planeTag> (fenix, …)
+    if (is737FamilyProtocol(fmcType)) return '737.html';
     if (fmcType === 'wt21') {
       const name = String(aircraft || '').toUpperCase();
       if (/H25B|H25|HAWKER|800XP/.test(name)) return 'hawker.html';
@@ -43,6 +62,9 @@
    */
   function maybeRedirect(raw, opts) {
     opts = opts || {};
+    try {
+      if (new URLSearchParams(location.search).get('preview') === '1') return false;
+    } catch (_) { /* ignore */ }
     const text = String(raw || '');
     if (text.indexOf('update:') !== 0) return false;
     const colon = text.indexOf(':', 7);
@@ -75,5 +97,6 @@
   }
 
   global.LIM_pageForProtocol = pageForProtocol;
+  global.LIM_is737FamilyProtocol = is737FamilyProtocol;
   global.LIM_maybeRedirect = maybeRedirect;
 })(window);
