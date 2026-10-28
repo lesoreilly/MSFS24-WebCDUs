@@ -70,7 +70,7 @@
   const WS_PORT = Number(window.B747_WS_PORT) || 8088;
   const clickSound = new Audio('button-click.wav?v=20260921-2');
   clickSound.preload = 'auto';
-  clickSound.volume = 0.45;
+  clickSound.volume = limClickVolume();
 
   function playClick() {
     try {
@@ -121,20 +121,12 @@
     return chars.length ? chars[0] : ' ';
   }
 
-  function execLit() {
-    const screens = [];
-    Object.keys(byCdu).forEach(function (id) { screens.push(byCdu[id]); });
-    if (legacy.left) screens.push(legacy.left);
-    if (legacy.right) screens.push(legacy.right);
-    return screens.some(function (screen) { return !!(screen && screen.exec); });
-  }
-
   function paintScreen(unit, ctx, screen) {
     const lines = screen && screen.lines;
     const powered = !screen || screen.power !== false;
     ctx.screenEl.classList.toggle('off', !powered);
     const execKey = unit.querySelector('[data-key="EXEC"]');
-    if (execKey) execKey.classList.toggle('lit', execLit());
+    if (execKey) execKey.classList.toggle('lit', !!(screen && screen.exec));
     ['dspy', 'fail', 'msg', 'ofst'].forEach(function (name) {
       const el = unit.querySelector('[data-ann="' + name + '"]');
       if (el) el.classList.toggle('lit', !!(screen && screen[name]));

@@ -4,6 +4,7 @@ cd /d "%~dp0"
 
 echo.
 echo Ctrl+Click a printed URL to open the Web CDU.
+echo Press Ctrl+C to stop the hub.
 echo.
 
 set "NODE_EXE="

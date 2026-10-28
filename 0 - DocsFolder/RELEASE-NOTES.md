@@ -1,3 +1,13 @@
+# Release 2.0.2
+
+The Community package is `z-DementedMonkey-LiM-CDU-v2.0.2`.
+
+## What is new in 2.0.2
+
+- `cdu-server.cfg` `clickVolume` sets the button click loudness from 0 to 100. 0 is silent. 100 is as loud as the recording. The default is 45.
+- BlueBird 757 EXEC light follows `FMC_EXEC_ACTIVE_1` for the captain and `FMC_EXEC_ACTIVE_2` for the first officer.
+- Closing the hub window, or pressing Ctrl+C, stops the Node process so the ports are free the next time it starts. The window says to press Ctrl+C.
+
 # Release 2.0.1
 
 The Community package is `z-DementedMonkey-LiM-CDU-v2.0.1`.
@@ -46,9 +56,9 @@ The LiM Charts plugin stays. It installs beside this package and the two run tog
 
 ## Install
 
-Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.1`.
+Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.2`.
 
-Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
+Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. Press Ctrl+C in that window to stop the hub. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 
 Leave the flight and start it again after you install, so the sim loads the new scripts.
 

@@ -152,10 +152,13 @@ function start(opts) {
   let liverySlot = null;
   let exec1 = null;
   let exec2 = null;
+  let bbExec1 = null;
+  let bbExec2 = null;
   let cduSlot = null;
   let lastTitle = '';
   let lastLivery = '';
   let execState = {};
+  let bbExecState = {};
   let cduMode = null;
   let annunKey = '';
 
@@ -211,6 +214,7 @@ function start(opts) {
         } else if (bytes.length >= DATA_OFFSET + 8) {
           slot.value = bytes.readDoubleLE(DATA_OFFSET);
           if (slot === exec1 || slot === exec2) onExec();
+          else if (slot === bbExec1 || slot === bbExec2) onBb757Exec();
           else if (slot === cduSlot) onCduOptions(slot.value);
         }
         return;
@@ -268,6 +272,14 @@ function start(opts) {
     request(exec2);
   }
 
+  function ensureBb757Exec() {
+    if (bbExec1) return;
+    bbExec1 = defineSlot('L:FMC_EXEC_ACTIVE_1', 'Number', FLOAT64, false);
+    bbExec2 = defineSlot('L:FMC_EXEC_ACTIVE_2', 'Number', FLOAT64, false);
+    request(bbExec1);
+    request(bbExec2);
+  }
+
   function ensureCduOptions() {
     if (cduSlot) return;
     cduSlot = defineSlot('L:cduOptions', 'Number', FLOAT64, false);
@@ -295,6 +307,7 @@ function start(opts) {
     if (title.indexOf('PMDG') >= 0 && title.indexOf('777') >= 0) ensure777Annun();
     if (title.indexOf('PMDG') >= 0) ensureCduOptions();
     if (title.indexOf('ATR') >= 0) ensureAtrExec();
+    if (title.indexOf('BLUEBIRD') >= 0 && title.indexOf('757') >= 0) ensureBb757Exec();
     if (typeof opts.onTitle === 'function') opts.onTitle(value);
   }
 
@@ -319,6 +332,22 @@ function start(opts) {
     if (!changed) return;
     execState = next;
     if (typeof opts.onAtrExec === 'function') opts.onAtrExec(next);
+  }
+
+  function onBb757Exec() {
+    const next = {};
+    let changed = false;
+    [[1, bbExec1], [2, bbExec2]].forEach(function (pair) {
+      const mcdu = pair[0];
+      const slot = pair[1];
+      if (!slot || typeof slot.value !== 'number') return;
+      const lit = slot.value >= 0.5 ? 1 : 0;
+      next[mcdu] = lit;
+      if (bbExecState[mcdu] !== lit) changed = true;
+    });
+    if (!changed) return;
+    bbExecState = next;
+    if (typeof opts.onBb757Exec === 'function') opts.onBb757Exec(next);
   }
 
   function onCduOptions(value) {
@@ -520,6 +549,8 @@ function start(opts) {
     request(liverySlot);
     request(exec1);
     request(exec2);
+    request(bbExec1);
+    request(bbExec2);
     request(cduSlot);
   }
 
@@ -530,6 +561,9 @@ function start(opts) {
     liverySlot = null;
     exec1 = null;
     exec2 = null;
+    bbExec1 = null;
+    bbExec2 = null;
+    bbExecState = {};
     cduSlot = null;
     lastTitle = '';
     lastLivery = '';

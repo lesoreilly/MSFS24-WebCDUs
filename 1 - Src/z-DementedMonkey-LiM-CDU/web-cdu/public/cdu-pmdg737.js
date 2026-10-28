@@ -76,7 +76,7 @@
   for (let i = 0; i < 4; i++) {
     const clip = new Audio(CLICK_URL);
     clip.preload = 'auto';
-    clip.volume = 0.45;
+    clip.volume = limClickVolume();
     clickPool.push(clip);
   }
   let clickIx = 0;

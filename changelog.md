@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.2 — 2026-10-27
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.2`.
+
+- `cdu-server.cfg` `clickVolume` sets the button click loudness from 0 to 100. 0 is silent. 100 is as loud as the recording. The default is 45.
+- BlueBird 757 EXEC light follows `FMC_EXEC_ACTIVE_1` for the captain and `FMC_EXEC_ACTIVE_2` for the first officer.
+- Closing the hub window, or pressing Ctrl+C, stops the Node process so the ports are free the next time it starts. The window says to press Ctrl+C.
+
 ## 2.0.1 — 2026-10-27
 
 The package folder is `z-DementedMonkey-LiM-CDU-v2.0.1`.

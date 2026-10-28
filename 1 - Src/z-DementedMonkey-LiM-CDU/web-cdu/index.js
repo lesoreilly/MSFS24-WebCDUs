@@ -45,6 +45,7 @@ function readCfg(file) {
     winCtrlPlaneTag: 'auto',
     winCtrlAircraft: '',
     winCtrlExporter: 'auto',
+    clickVolume: 45,
   };
   if (!fs.existsSync(file)) {
     return cfg;
@@ -65,6 +66,7 @@ function readCfg(file) {
     if (key === 'winCtrlPlaneTag' || key === 'winCtrlTag') cfg.winCtrlPlaneTag = value;
     if (key === 'winCtrlAircraft') cfg.winCtrlAircraft = value;
     if (key === 'winCtrlExporter' || key === 'winCtrlExporters') cfg.winCtrlExporter = value;
+    if (key === 'clickVolume') cfg.clickVolume = Number(value);
   }
   return cfg;
 }
@@ -73,6 +75,12 @@ function relayHostOr(value, fallback) {
   const host = String(value == null ? '' : value).trim();
   if (!host || !/^[A-Za-z0-9._:-]+$/.test(host)) return fallback;
   return host;
+}
+
+function percentOr(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(100, Math.max(0, n));
 }
 
 function portOr(value, fallback) {
@@ -92,6 +100,7 @@ let winCtrlAircraft = String(process.env.LIM_WINCTRL_AIRCRAFT || cfg.winCtrlAirc
 let observedAircraft = '';
 let observedLivery = '';
 let winCtrlExporter = String(process.env.LIM_WINCTRL_EXPORTER || cfg.winCtrlExporter || '').trim();
+let clickVolume = percentOr(process.env.LIM_CLICK_VOLUME, cfg.clickVolume);
 let exporterChildren = [];
 let exporterLabels = [];
 let exporterHost = null;
@@ -108,12 +117,14 @@ for (const arg of process.argv.slice(2)) {
   else if (arg.startsWith('--winctrl-plane-tag=')) winCtrlPlaneTag = arg.split('=').slice(1).join('=') || winCtrlPlaneTag;
   else if (arg.startsWith('--winctrl-aircraft=')) winCtrlAircraft = arg.split('=').slice(1).join('=') || winCtrlAircraft;
   else if (arg.startsWith('--winctrl-exporter=')) winCtrlExporter = arg.split('=').slice(1).join('=') || winCtrlExporter;
+  else if (arg.startsWith('--click-volume=')) clickVolume = percentOr(arg.split('=')[1], clickVolume);
   else if (arg === '--help' || arg === '-h') {
     console.log('node index.js [--http-port=N] [--sim-port=N] [--relay-port=N] [--relay-ip=ADDR]');
     console.log('             [--winctrl-port=N] [--winctrl-exporter=auto]');
     console.log('relay-port=0 disables the hardware relay.');
     console.log('winctrl-port=0 disables WinCtrl ingest. The WinCtrl port is 8320.');
     console.log('winctrl-exporter=auto follows the loaded aircraft. off turns readers off.');
+    console.log('click-volume=0 to 100 sets the button click loudness.');
     console.log('SPAD listens on relay-ip:relay-port. This hub connects out and speaks as the plane.');
     process.exit(0);
   } else {
@@ -184,6 +195,44 @@ const powerOffMessage = 'update:*:' + JSON.stringify({ left: blankScreen, right:
 
 const servers = [];
 const extraClients = new Set();
+let hubClosing = false;
+let winConsoleHook = null;
+
+function shutdownHub() {
+  if (hubClosing) return;
+  hubClosing = true;
+  if (relayOutTimer) {
+    clearTimeout(relayOutTimer);
+    relayOutTimer = null;
+  }
+  try { exporters.stopExporters(exporterChildren); } catch (_e) { /* ignore */ }
+  if (keyBridge && typeof keyBridge.kill === 'function') {
+    try { keyBridge.kill(); } catch (_e) { /* ignore */ }
+  }
+  console.log('Hub stopped.');
+  process.exit(0);
+}
+
+// Closing the console window is not Ctrl+C. Node treats that close as handled
+// and keeps running, so the ports stay taken. Exit from the Windows close event.
+function bindWindowsConsoleClose(onClose) {
+  if (process.platform !== 'win32') return;
+  try {
+    const koffi = require('koffi');
+    const kernel32 = koffi.load('kernel32.dll');
+    const setHandler = kernel32.func('int __stdcall SetConsoleCtrlHandler(void *handler, int add)');
+    winConsoleHook = koffi.register(function (ctrlType) {
+      // 0 Ctrl+C, 1 Ctrl+Break, 2 window close, 5 logoff, 6 shutdown.
+      if (ctrlType === 0 || ctrlType === 1 || ctrlType === 2 || ctrlType === 5 || ctrlType === 6) {
+        onClose();
+      }
+      return 1;
+    }, 'int __stdcall (uint32)');
+    setHandler(winConsoleHook, 1);
+  } catch (err) {
+    console.error('Console close hook failed: ' + (err && err.message ? err.message : err));
+  }
+}
 
 function sendSafe(client, text) {
   if (!client || client.readyState !== OPEN) return;
@@ -436,6 +485,7 @@ function effectiveWinCtrlTag() {
 }
 
 const atrExecLt = { 1: false, 2: false };
+const bb757ExecLt = { 1: false, 2: false };
 const lastWinCtrlDm = { left: null, right: null };
 let pmdgCduOptions = null;
 
@@ -496,6 +546,45 @@ function publishPmdgAnnun(annun) {
   ['left', 'right'].forEach(function (side) {
     if (!lastWinCtrlDm[side]) return;
     const next = withPmdgAnnun(lastWinCtrlDm[side], side);
+    lastWinCtrlDm[side] = next;
+    lastFromSim = next;
+    lastFromSimViaWinCtrl = true;
+    fanout(next);
+    const alias = relayAliasUpdate(next);
+    if (alias) fanoutRelay(alias);
+  });
+}
+
+function withBb757Exec(dm, side) {
+  if (!dm || effectiveWinCtrlTag() !== 'bb757') return dm;
+  const colon = dm.indexOf(':', 7);
+  if (colon < 0) return dm;
+  let payload;
+  try {
+    payload = JSON.parse(dm.slice(colon + 1));
+  } catch (_e) {
+    return dm;
+  }
+  const key = side === 'right' ? 'right' : 'left';
+  const mcdu = key === 'right' ? 2 : 1;
+  if (payload[key]) payload[key].exec = !!bb757ExecLt[mcdu];
+  return dm.slice(0, colon + 1) + JSON.stringify(payload);
+}
+
+function publishBb757Exec(execLt) {
+  if (!execLt || typeof execLt !== 'object') return;
+  const changed = [];
+  [1, 2].forEach(function (mcdu) {
+    if (execLt[mcdu] == null && execLt[String(mcdu)] == null) return;
+    const raw = execLt[mcdu] != null ? execLt[mcdu] : execLt[String(mcdu)];
+    const lit = Number(raw) >= 0.5;
+    if (bb757ExecLt[mcdu] === lit) return;
+    bb757ExecLt[mcdu] = lit;
+    changed.push(mcdu === 2 ? 'right' : 'left');
+  });
+  changed.forEach(function (side) {
+    if (!lastWinCtrlDm[side]) return;
+    const next = withBb757Exec(lastWinCtrlDm[side], side);
     lastWinCtrlDm[side] = next;
     lastFromSim = next;
     lastFromSimViaWinCtrl = true;
@@ -587,6 +676,7 @@ function publishWinCtrlDisplay(frame, side) {
   let dm = winctrl.displayToDmUpdate(frame, { side, planeTag: tag, aircraft });
   if (!dm) return;
   dm = withAtrExec(dm, side);
+  dm = withBb757Exec(dm, side);
   dm = withPmdgAnnun(dm, side);
   lastWinCtrlDm[side === 'right' ? 'right' : 'left'] = dm;
   if (!winCtrlAnnounced) {
@@ -731,6 +821,7 @@ function startConfiguredExporters() {
     winCtrlPort,
     log: console.log,
     onAtrExec: publishAtrExec,
+    onBb757Exec: publishBb757Exec,
     onAircraftTitle: applyAircraftTitle,
     onAircraftLivery: applyAircraftLivery,
     onPmdgCduOptions: publishPmdgCduOptions,
@@ -778,6 +869,8 @@ function printBanner() {
       console.log('  Exporter    off');
     }
   }
+  console.log('');
+  console.log('Press Ctrl+C to stop the hub.');
   console.log('');
   console.log('Waiting for simulator...');
   console.log('');
@@ -851,6 +944,13 @@ function connectRelayOut() {
 }
 
 async function main() {
+  bindWindowsConsoleClose(shutdownHub);
+  process.on('SIGHUP', shutdownHub);
+  process.on('SIGBREAK', shutdownHub);
+  process.on('SIGINT', shutdownHub);
+  process.on('SIGTERM', shutdownHub);
+  process.on('exit', () => exporters.stopExporters(exporterChildren));
+
   await checkFree(simPort);
   await checkFree(httpPort);
   if (winCtrlPort) await checkFree(winCtrlPort);
@@ -874,7 +974,9 @@ async function main() {
       const ext = path.extname(filePath).toLowerCase();
       let body = data;
       if (ext === '.html' || ext === '.js') {
-        body = Buffer.from(String(data).replace(/__LIM_WS_PORT__/g, String(simPort)));
+        body = Buffer.from(String(data)
+          .replace(/__LIM_WS_PORT__/g, String(simPort))
+          .replace(/__LIM_CLICK_VOLUME__/g, (clickVolume / 100).toFixed(2)));
       }
       const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
       if (ext === '.html' || ext === '.css' || ext === '.js') headers['Cache-Control'] = 'no-store';
@@ -893,17 +995,8 @@ async function main() {
   attachMirror(simWss, 'sim');
 
   if (relayPort) connectRelayOut();
-  if (winCtrlPort) attachWinCtrlServer();
-
-  process.on('exit', () => exporters.stopExporters(exporterChildren));
-  process.on('SIGINT', () => {
-    exporters.stopExporters(exporterChildren);
-    process.exit(0);
-  });
-  process.on('SIGTERM', () => {
-    exporters.stopExporters(exporterChildren);
-    process.exit(0);
-  });
+  const winCtrl = winCtrlPort ? attachWinCtrlServer() : null;
+  if (winCtrl) servers.push(winCtrl.httpServer, winCtrl.wss);
 
   httpServer.listen(httpPort, '0.0.0.0', printBanner);
 }

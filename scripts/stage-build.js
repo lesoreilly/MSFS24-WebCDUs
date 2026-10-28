@@ -26,7 +26,17 @@ function assemblePackage(pkg, destPkg) {
   if (!fs.existsSync(src)) {
     throw new Error(`Source package not found: ${src}`);
   }
-  fs.cpSync(src, destPkg, { recursive: true });
+  // web-cdu/runtime is a local Node/Python folder. Git ignores it.
+  // start-web-cdu.cmd downloads portable Node when this PC has none.
+  fs.cpSync(src, destPkg, {
+    recursive: true,
+    filter: function (source) {
+      const rel = path.relative(src, source);
+      const parts = rel.split(path.sep);
+      const at = parts.indexOf('web-cdu');
+      return !(at >= 0 && parts[at + 1] === 'runtime');
+    }
+  });
 }
 
 /** Ship the Web CDU hub with a local ws runtime so start-web-cdu.cmd works from Community. */

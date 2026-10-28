@@ -2,6 +2,8 @@
 
 `release-version.json` is the version. The package that ships is `1 - Src/z-DementedMonkey-LiM-CDU/`.
 
+After a GitHub release is published, bump `release-version.json` to the next patch before editing anything else. A released 2.0.1 means the next edit starts at 2.0.2. A later choice can raise that number further before the next release. Do not change product files while `release-version.json` still matches a version that already has a GitHub release. Update the current version line in `changelog.md`, `readme.md`, `USER-MANUAL.md`, and `RELEASE-NOTES.md` with that bump. Leave older release sections as history.
+
 `npm run build` writes `build/msfs2024/z-DementedMonkey-LiM-CDU-v{version}/` and `build/msfs2020/z-DementedMonkey-LiM-CDU-v{version}/`. Both use the Community folder name `z-DementedMonkey-LiM-CDU-v{version}`. The 2024 tree drops the `FFX21` P180 override. The 2020 tree keeps it and sets `minimum_game_version` to `1.39.6`. The build vendors `node_modules/ws` into `web-cdu/` so `start-web-cdu.cmd` can run from Community without a second install, and copies `USER-MANUAL.md` and `RELEASE-NOTES.md` into `documentation/`. When `build-config.json` has `communityDir` and `fs2020CommunityDir`, those trees are copied into the matching sim. An older unversioned `z-DementedMonkey-LiM-CDU` folder in either Community directory is removed so only the versioned package loads.
 
 `npm run release` does that and then writes `dist/z-DementedMonkey-LiM-CDU-v{version}-msfs2024.zip` and `dist/z-DementedMonkey-LiM-CDU-v{version}-msfs2020.zip`. `npm run server` runs the hub from source. `npm run test:relay` checks the SPAD dial-out.

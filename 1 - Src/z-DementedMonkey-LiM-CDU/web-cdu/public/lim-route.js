@@ -99,4 +99,11 @@
   global.LIM_pageForProtocol = pageForProtocol;
   global.LIM_is737FamilyProtocol = is737FamilyProtocol;
   global.LIM_maybeRedirect = maybeRedirect;
+  global.limClickVolume = function () {
+    var n = Number('__LIM_CLICK_VOLUME__');
+    if (!isFinite(n)) return 0.45;
+    if (n < 0) return 0;
+    if (n > 1) return 1;
+    return n;
+  };
 })(window);

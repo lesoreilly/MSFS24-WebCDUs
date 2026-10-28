@@ -1,0 +1,12 @@
+---
+description: Bump the package version before editing a version that already has a GitHub release
+alwaysApply: true
+---
+
+# Released versions stay closed
+
+`release-version.json` is the version. The Community folder is `z-DementedMonkey-LiM-CDU-v{version}`.
+
+After a GitHub release is published, bump `release-version.json` to the next patch before editing anything else. 2.0.1 released means the next edit starts at 2.0.2. A later choice can raise that number further before the next release. Do not change product files while `release-version.json` still matches a version that already has a GitHub release.
+
+Update the current version line in `changelog.md`, `readme.md`, `0 - DocsFolder/USER-MANUAL.md`, and `0 - DocsFolder/RELEASE-NOTES.md` in the same bump. Leave older release sections as history.

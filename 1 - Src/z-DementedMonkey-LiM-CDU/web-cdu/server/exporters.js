@@ -268,6 +268,7 @@ function startExporters(opts) {
       onTitle: opts.onAircraftTitle,
       onLivery: opts.onAircraftLivery,
       onAtrExec: opts.onAtrExec,
+      onBb757Exec: opts.onBb757Exec,
       onPmdgCduOptions: opts.onPmdgCduOptions,
       onPmdgAnnun: opts.onPmdgAnnun,
     });

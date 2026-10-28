@@ -2,7 +2,7 @@
 
 Web CDU for Microsoft Flight Simulator 2024. Modified from [dementedmonkey/cj4-mcdu](https://github.com/dementedmonkey/cj4-mcdu) 0.10.0. This fork stays under GPL-3. See `LICENSE`. The package name credits Demented Monkey and LiM together.
 
-Release 2.0.1. The sim package is `z-DementedMonkey-LiM-CDU-v2.0.1`. MSFS 2024 and MSFS 2020 each have their own zip. The browser hub is Node, started with `web-cdu/start-web-cdu.cmd`. There is no packaged exe. Ports live in `web-cdu/cdu-server.cfg`.
+Release 2.0.2. The sim package is `z-DementedMonkey-LiM-CDU-v2.0.2`. MSFS 2024 and MSFS 2020 each have their own zip. The browser hub is Node, started with `web-cdu/start-web-cdu.cmd`. There is no packaged exe. Ports live in `web-cdu/cdu-server.cfg`.
 
 The browser faces are HTML and CSS. Install, the WEBSOCKETS pages, and the relay are in `0 - DocsFolder/USER-MANUAL.md`. Build steps are in `0 - DocsFolder/BUILD-PIPELINE.md`.
 
@@ -51,7 +51,7 @@ Use the MSFS 2020 zip for these aircraft.
 
 ## Run
 
-Double-click `web-cdu/start-web-cdu.cmd` from the package and leave the window open. It prints the browser URL. If Node.js is not already on the PC, the script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
+Double-click `web-cdu/start-web-cdu.cmd` from the package and leave the window open. It prints the browser URL. Press Ctrl+C in that window to stop the hub. If Node.js is not already on the PC, the script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 
 Defaults in `cdu-server.cfg`:
 
@@ -60,6 +60,7 @@ Defaults in `cdu-server.cfg`:
 - `relayIp` 127.0.0.1 and `relayPort` 8089, the SPAD relay. `relayPort=0` turns the relay off
 - `winCtrlPort` 8320, the MobiFlight WinCtrl port. `0` turns it off. Do not run MobiFlight Connector as the WinCtrl server while this is on
 - `winCtrlExporter` `auto`, follows the loaded aircraft. `off` turns the readers off
+- `clickVolume` 45, button click loudness from 0 to 100. 0 is silent. 100 is as loud as the recording
 
 The sim and the browser connect in to `simPort`. SPAD listens on `relayPort`. The hub dials out to `relayIp:relayPort` and sends the same messages the plane sends. Set `relayPort` to `0` to turn that off.
 

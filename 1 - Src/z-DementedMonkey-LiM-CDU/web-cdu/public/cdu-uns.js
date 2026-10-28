@@ -71,7 +71,7 @@
   const WS_PORT = Number(window.UNS1_WS_PORT) || 8088;
   const clickSound = new Audio('button-click.wav?v=20260921-2');
   clickSound.preload = 'auto';
-  clickSound.volume = 0.55;
+  clickSound.volume = limClickVolume();
 
   function playClick() {
     try {
