@@ -283,6 +283,7 @@ function holdRelayForSpad() {
 function fanout(message, skip) {
   const text = Buffer.isBuffer(message) ? message.toString() : String(message);
   for (const wss of servers) {
+    if (!wss || !wss.clients || typeof wss.clients[Symbol.iterator] !== 'function') continue;
     for (const client of wss.clients) {
       if (client !== skip) sendSafe(client, text);
     }
@@ -995,8 +996,7 @@ async function main() {
   attachMirror(simWss, 'sim');
 
   if (relayPort) connectRelayOut();
-  const winCtrl = winCtrlPort ? attachWinCtrlServer() : null;
-  if (winCtrl) servers.push(winCtrl.httpServer, winCtrl.wss);
+  if (winCtrlPort) attachWinCtrlServer();
 
   httpServer.listen(httpPort, '0.0.0.0', printBanner);
 }

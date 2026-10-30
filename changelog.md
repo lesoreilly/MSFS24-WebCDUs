@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.3 — 2026-10-29
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.3`.
+
+- The hub no longer crashes with `wss.clients is not iterable` when a screen update arrives. 2.0.2 had put the WinCtrl HTTP server into the websocket send list.
+
 ## 2.0.2 — 2026-10-27
 
 The package folder is `z-DementedMonkey-LiM-CDU-v2.0.2`.

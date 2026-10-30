@@ -1,3 +1,11 @@
+# Release 2.0.3
+
+The Community package is `z-DementedMonkey-LiM-CDU-v2.0.3`.
+
+## What is new in 2.0.3
+
+- The hub no longer crashes with `wss.clients is not iterable` when a screen update arrives. 2.0.2 had put the WinCtrl HTTP server into the websocket send list.
+
 # Release 2.0.2
 
 The Community package is `z-DementedMonkey-LiM-CDU-v2.0.2`.
@@ -56,7 +64,7 @@ The LiM Charts plugin stays. It installs beside this package and the two run tog
 
 ## Install
 
-Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.2`.
+Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.3`.
 
 Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. Press Ctrl+C in that window to stop the hub. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 
