@@ -307,7 +307,7 @@ function start(opts) {
     if (title.indexOf('PMDG') >= 0 && title.indexOf('777') >= 0) ensure777Annun();
     if (title.indexOf('PMDG') >= 0) ensureCduOptions();
     if (title.indexOf('ATR') >= 0) ensureAtrExec();
-    if (title.indexOf('BLUEBIRD') >= 0 && title.indexOf('757') >= 0) ensureBb757Exec();
+    if (title.indexOf('757-200') >= 0 || title.indexOf('757-300') >= 0) ensureBb757Exec();
     if (typeof opts.onTitle === 'function') opts.onTitle(value);
   }
 

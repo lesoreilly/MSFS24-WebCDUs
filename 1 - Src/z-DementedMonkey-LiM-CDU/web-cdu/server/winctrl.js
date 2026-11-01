@@ -23,13 +23,6 @@ const COLOUR_TO_STYLES = {
   k: 'khaki',
 };
 
-/** Font Target Data → default planeTag when cfg is "auto". */
-const FONT_TO_TAG = {
-  Boeing: 'pmdg737',
-  Collins: 'wt21',
-  AirbusThales: 'fenix',
-};
-
 /** Known MSFS plane tags (protocol = wt737/<tag>). */
 const PLANE_TAGS = {
   uns1: 'uns1',
@@ -97,12 +90,6 @@ function protocolForTag(tag) {
   if (t === 'uns1') return 'wt737/uns1';
   if (t === 'wt747') return 'wt737/wt747';
   return 'wt737/' + t;
-}
-
-function tagFromFont(fontName) {
-  const name = String(fontName || '').trim();
-  if (FONT_TO_TAG[name]) return FONT_TO_TAG[name];
-  return null;
 }
 
 function cellStyles(colourLetter, size, inverse) {
@@ -209,13 +196,11 @@ module.exports = {
   CDU_CELLS,
   PLANE_TAGS,
   COLOUR_TO_STYLES,
-  FONT_TO_TAG,
   normalizePath,
   sideFromPath,
   isWinCtrlPath,
   normalizePlaneTag,
   protocolForTag,
-  tagFromFont,
   displayDataToScreen,
   displayToDmUpdate,
   powerOffDmUpdate,

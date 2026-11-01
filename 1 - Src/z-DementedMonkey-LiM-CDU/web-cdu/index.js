@@ -106,7 +106,6 @@ let exporterLabels = [];
 let exporterHost = null;
 let activeWinCtrlExporter = '';
 let keyBridge = null;
-let lastWinCtrlProtocolLog = '';
 
 for (const arg of process.argv.slice(2)) {
   if (arg.startsWith('--http-port=')) httpPort = portOr(arg.split('=')[1], httpPort);
@@ -220,14 +219,15 @@ function bindWindowsConsoleClose(onClose) {
   try {
     const koffi = require('koffi');
     const kernel32 = koffi.load('kernel32.dll');
-    const setHandler = kernel32.func('int __stdcall SetConsoleCtrlHandler(void *handler, int add)');
+    const Handler = koffi.proto('int __stdcall ConsoleCtrlHandler(uint32 ctrlType)');
+    const setHandler = kernel32.func('int __stdcall SetConsoleCtrlHandler(ConsoleCtrlHandler *handler, int add)');
     winConsoleHook = koffi.register(function (ctrlType) {
       // 0 Ctrl+C, 1 Ctrl+Break, 2 window close, 5 logoff, 6 shutdown.
       if (ctrlType === 0 || ctrlType === 1 || ctrlType === 2 || ctrlType === 5 || ctrlType === 6) {
         onClose();
       }
       return 1;
-    }, 'int __stdcall (uint32)');
+    }, koffi.pointer(Handler));
     setHandler(winConsoleHook, 1);
   } catch (err) {
     console.error('Console close hook failed: ' + (err && err.message ? err.message : err));
@@ -338,10 +338,9 @@ let lastFromSimViaWinCtrl = false;
 let winCtrlClients = 0;
 let winCtrlAnnounced = false;
 let resolvedWinCtrlTag = winCtrlPlaneTag === 'auto' ? 'winctrl' : winctrl.normalizePlaneTag(winCtrlPlaneTag);
-/** When a winCtrlExporter is running (e.g. atr), Font hints must not steal the tag
- *  (ATR scripts send AirbusThales, which would otherwise map to fenix). */
+/** Set from the sim TITLE only. A WinCtrl Font message must not choose the plane. */
 let exporterLockedTag = '';
-let lastFontHint = '';
+const pendingWinCtrlFrames = { left: null, right: null };
 
 function roleOf(text) {
   if (text === 'mcduConnected' || text.indexOf('update:') === 0) return 'sim';
@@ -477,12 +476,7 @@ function attachMirror(wss, label) {
 
 function effectiveWinCtrlTag() {
   if (winCtrlPlaneTag !== 'auto') return winctrl.normalizePlaneTag(winCtrlPlaneTag);
-  if (exporterLockedTag) return exporterLockedTag;
-  if (lastFontHint) {
-    const fromFont = winctrl.tagFromFont(lastFontHint);
-    if (fromFont) return fromFont;
-  }
-  return resolvedWinCtrlTag || 'winctrl';
+  return exporterLockedTag || '';
 }
 
 const atrExecLt = { 1: false, 2: false };
@@ -634,16 +628,9 @@ function publishAtrExec(execLt) {
   });
 }
 
-function logWinCtrlAircraft(dm) {
-  const protocol = screenProtocol(dm);
-  if (!protocol || protocol === lastWinCtrlProtocolLog) return;
-  lastWinCtrlProtocolLog = protocol;
-  const label = planeFromUpdate(dm);
-  if (label) console.log('Aircraft: ' + label + ' (WinCtrl)');
-}
-
 function republishWinCtrlCache() {
   const tag = effectiveWinCtrlTag();
+  if (!tag) return;
   const protocol = winctrl.protocolForTag(tag);
   const aircraft = winCtrlAircraft || aircraftIdent(observedAircraft, observedLivery) || tag;
   ['left', 'right'].forEach(function (side) {
@@ -662,17 +649,28 @@ function republishWinCtrlCache() {
     lastWinCtrlDm[side] = next;
     lastFromSim = next;
     lastFromSimViaWinCtrl = true;
-    logWinCtrlAircraft(next);
     fanout(next);
     const alias = relayAliasUpdate(next);
     if (alias) fanoutRelay(alias);
   });
 }
 
+function flushPendingWinCtrlDisplays() {
+  if (!effectiveWinCtrlTag()) return;
+  ['left', 'right'].forEach(function (side) {
+    const frame = pendingWinCtrlFrames[side];
+    if (frame) publishWinCtrlDisplay(frame, side);
+  });
+}
+
 function publishWinCtrlDisplay(frame, side) {
   // Prefer a live DM sim exporter when present.
   if (simClients > 0) return;
+  const key = side === 'right' ? 'right' : 'left';
+  pendingWinCtrlFrames[key] = frame;
+  // The sim TITLE chooses the plane. Hold the screen until that title is known.
   const tag = effectiveWinCtrlTag();
+  if (!tag) return;
   const aircraft = winCtrlAircraft || aircraftIdent(observedAircraft, observedLivery) || tag;
   let dm = winctrl.displayToDmUpdate(frame, { side, planeTag: tag, aircraft });
   if (!dm) return;
@@ -688,7 +686,6 @@ function publishWinCtrlDisplay(frame, side) {
   }
   lastFromSim = dm;
   lastFromSimViaWinCtrl = true;
-  logWinCtrlAircraft(dm);
   fanout(dm);
   const alias = relayAliasUpdate(dm);
   if (alias) fanoutRelay(alias);
@@ -727,20 +724,7 @@ function attachWinCtrlServer() {
     ws.on('message', (message) => {
       const parsed = winctrl.parseWinCtrlMessage(message.toString());
       if (!parsed) return;
-      if (parsed.kind === 'font') {
-        lastFontHint = parsed.font || '';
-        if (winCtrlPlaneTag === 'auto' && !exporterLockedTag) {
-          const hint = winctrl.tagFromFont(lastFontHint);
-          if (hint && hint !== resolvedWinCtrlTag) {
-            resolvedWinCtrlTag = hint;
-            console.log('WinCtrl Font "' + lastFontHint + '" → planeTag ' + hint);
-            republishWinCtrlCache();
-          }
-        } else if (exporterLockedTag && lastFontHint) {
-          console.log('WinCtrl Font "' + lastFontHint + '" ignored — exporter locked tag=' + exporterLockedTag);
-        }
-        return;
-      }
+      if (parsed.kind === 'font') return;
       if (parsed.kind === 'display') {
         publishWinCtrlDisplay(parsed.frame, side);
       }
@@ -751,7 +735,8 @@ function attachWinCtrlServer() {
       console.log('WinCtrl disconnected ' + pathname);
       if (winCtrlClients === 0 && simClients === 0) {
         winCtrlAnnounced = false;
-        fanout(winctrl.powerOffDmUpdate(effectiveWinCtrlTag(), winCtrlAircraft || effectiveWinCtrlTag()));
+        const tag = effectiveWinCtrlTag();
+        if (tag) fanout(winctrl.powerOffDmUpdate(tag, winCtrlAircraft || aircraftIdent(observedAircraft, observedLivery) || tag));
       }
     });
   });
@@ -783,8 +768,9 @@ function applyAircraftTitle(title) {
   if (!winCtrlAircraft && nextTitle) observedAircraft = nextTitle;
   const direct = exporters.directWinCtrlForTitle(title);
   const name = direct || exporters.exporterForTitle(title);
-  if (name === activeWinCtrlExporter) {
+  if (name && name === activeWinCtrlExporter) {
     republishWinCtrlCache();
+    flushPendingWinCtrlDisplays();
     return;
   }
   exporterHost.stopReaders();
@@ -793,8 +779,9 @@ function applyAircraftTitle(title) {
     exporterLockedTag = direct;
     resolvedWinCtrlTag = direct;
     exporterLabels = [direct];
-    console.log('Aircraft: ' + title + ' → ' + direct + ' (direct WinCtrl)');
+    console.log('Aircraft: ' + title + ' → ' + direct);
     republishWinCtrlCache();
+    flushPendingWinCtrlDisplays();
     return;
   }
   if (!name) {
@@ -812,7 +799,8 @@ function applyAircraftTitle(title) {
   exporterLockedTag = def.planeTag;
   resolvedWinCtrlTag = def.planeTag;
   exporterLabels = [def.planeTag];
-  console.log('Aircraft: ' + title + ' → ' + def.label);
+  console.log('Aircraft: ' + title + ' → ' + def.planeTag);
+  flushPendingWinCtrlDisplays();
 }
 
 function startConfiguredExporters() {
@@ -841,10 +829,26 @@ function startConfiguredExporters() {
   }
 }
 
+function packageVersion() {
+  const files = [
+    path.join(__dirname, '..', '..', '..', 'release-version.json'),
+    path.join(__dirname, '..', 'manifest.json'),
+  ];
+  for (const file of files) {
+    try {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const version = data.version || data.package_version;
+      if (version) return String(version);
+    } catch (_e) { /* try the next file */ }
+  }
+  return '';
+}
+
 function printBanner() {
   const lan = localIpv4s();
+  const version = packageVersion();
   console.log('');
-  console.log('z-DementedMonkey-LiM-CDU');
+  console.log('z-DementedMonkey-LiM-CDU' + (version ? '  ' + version : ''));
   console.log('');
   console.log('  This PC     ' + href('http://localhost:' + httpPort));
   for (const nic of lan) {

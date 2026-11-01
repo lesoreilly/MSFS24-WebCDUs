@@ -121,10 +121,12 @@ function exporterForTitle(title) {
 }
 
 /** Planes that publish WinCtrl themselves. No reader; the tag must stay locked
- *  so a Boeing font hint does not fall through to the PMDG 737. */
+ *  so a Boeing font hint does not fall through to the PMDG 737.
+ *  MSFS has no 757 other than the BlueBird. Livery titles often omit "BlueBird"
+ *  and only say 757-200 or 757-300. */
 function directWinCtrlForTitle(title) {
   const t = String(title || '');
-  if (/bluebird/i.test(t) && /757/i.test(t)) return 'bb757';
+  if (/757-200/i.test(t) || /757-300/i.test(t)) return 'bb757';
   return '';
 }
 

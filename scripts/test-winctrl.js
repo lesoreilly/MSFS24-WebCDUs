@@ -12,6 +12,7 @@ const winctrl = require(path.join(
   '1 - Src',
   'z-DementedMonkey-LiM-CDU',
   'web-cdu',
+  'server',
   'winctrl.js'
 ));
 
@@ -76,14 +77,6 @@ function testWt21Tag() {
   console.log('ok wt21 tag → update:wt737/wt21:');
 }
 
-function testFontHints() {
-  assert.strictEqual(winctrl.tagFromFont('Boeing'), 'pmdg737');
-  assert.strictEqual(winctrl.tagFromFont('Collins'), 'wt21');
-  assert.strictEqual(winctrl.tagFromFont('AirbusThales'), 'fenix');
-  assert.strictEqual(winctrl.tagFromFont('Unknown'), null);
-  console.log('ok Font → planeTag hints');
-}
-
 function testPaths() {
   assert.strictEqual(winctrl.sideFromPath('/winwing/cdu-captain'), 'left');
   assert.strictEqual(winctrl.sideFromPath('/winwing/cdu-co-pilot'), 'right');
@@ -118,7 +111,6 @@ function testNormalize() {
 
 testFenixFixture();
 testWt21Tag();
-testFontHints();
 testPaths();
 testParse();
 testNormalize();

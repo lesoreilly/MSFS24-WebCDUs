@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.4 — 2026-11-01
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.4`.
+
+- A 757-200 or 757-300 title uses the BlueBird 757 face and keys. The title does not have to contain BlueBird.
+- The sim aircraft title is the only plane identification. A WinCtrl font no longer chooses the CDU.
+- The hub window prints the package version at startup.
+- Closing the hub window no longer prints `Console close hook failed`.
+
 ## 2.0.3 — 2026-10-29
 
 The package folder is `z-DementedMonkey-LiM-CDU-v2.0.3`.
