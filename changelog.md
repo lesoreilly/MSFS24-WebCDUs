@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.5 — 2026-11-14
+
+The package folder is `z-DementedMonkey-LiM-CDU-v2.0.5`.
+
+- Every key plays `ButtonPress.wav` on press and `ButtonRelease.wav` on release, including a held CLR.
+- `cdu-server.cfg` `clickStyle` can be `press-release` (default) or `single`. With `single`, `clickSound` picks `click`, `press`, or `release`.
+- Opening the hub URL loads the real WT21 CJ4 face. The old generic index layout is gone.
+
 ## 2.0.4 — 2026-11-01
 
 The package folder is `z-DementedMonkey-LiM-CDU-v2.0.4`.

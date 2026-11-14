@@ -72,18 +72,6 @@
   const foCtx = buildScreen(foUnit.querySelector('.screen'));
 
   const WS_PORT = Number(window.LIM_WS_PORT) || 8088;
-  const clickSound = new Audio('button-click.wav?v=20260921-2');
-  clickSound.preload = 'auto';
-  clickSound.volume = limClickVolume();
-
-  function playClick() {
-    try {
-      const n = clickSound.cloneNode();
-      n.volume = clickSound.volume;
-      n.play().catch(function () { /* first gesture unlocks audio */ });
-    } catch (_) { /* ignore */ }
-  }
-
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = location.hostname || '127.0.0.1';
@@ -220,7 +208,6 @@
   }
 
   function sendEvent(name, which) {
-    playClick();
     const target = which || activeSide;
     if (!socket || socket.readyState !== WebSocket.OPEN || !name) return;
     socket.send('event:' + protocol + ':' + target + ':' + name);
@@ -299,51 +286,52 @@
   function bindUnit(unit, ctx) {
     unit.querySelectorAll('[data-key]').forEach(function (btn) {
       const key = btn.getAttribute('data-key');
-      if (key === 'CLR') return;
-      btn.addEventListener('click', function () {
+      let held = false;
+      let clrTimer = null;
+      let clrLong = false;
+      btn.addEventListener('pointerdown', function (ev) {
+        if (ev.button != null && ev.button !== 0) return;
+        limPlayKeyDown();
         activeSide = panelSide(unit);
+        held = true;
+        try { btn.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
+        btn.classList.add('down');
+        if (key === 'CLR') {
+          clrLong = false;
+          clrTimer = setTimeout(function () {
+            clrTimer = null;
+            clrLong = true;
+            sendEvent('CLR_Long', panelSide(unit));
+          }, 550);
+        }
+      });
+      function release() {
+        if (!held) return;
+        held = false;
+        limPlayKeyUp();
+        btn.classList.remove('down');
+        if (key === 'CLR') {
+          if (clrTimer) {
+            clearTimeout(clrTimer);
+            clrTimer = null;
+            if (!clrLong) sendEvent('CLR', panelSide(unit));
+          }
+          clrLong = false;
+          return;
+        }
         if (key === 'BRT_UP') {
           applyBrt(brtLevel + BRT_STEP);
-          playClick();
           return;
         }
         if (key === 'BRT_DN') {
           applyBrt(brtLevel - BRT_STEP);
-          playClick();
           return;
         }
-        sendEvent(key, activeSide);
-      });
+        sendEvent(key, panelSide(unit));
+      }
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
     });
-
-    const clrBtn = unit.querySelector('[data-key="CLR"]');
-    let clrTimer = null;
-    let clrLong = false;
-    if (clrBtn) {
-      clrBtn.addEventListener('pointerdown', function (ev) {
-        if (ev.button != null && ev.button !== 0) return;
-        activeSide = panelSide(unit);
-        clrLong = false;
-        clrTimer = setTimeout(function () {
-          clrTimer = null;
-          clrLong = true;
-          sendEvent('CLR_Long', panelSide(unit));
-        }, 550);
-      });
-      clrBtn.addEventListener('pointerup', function () {
-        if (clrTimer) {
-          clearTimeout(clrTimer);
-          clrTimer = null;
-          if (!clrLong) sendEvent('CLR', panelSide(unit));
-        }
-        clrLong = false;
-      });
-      clrBtn.addEventListener('pointercancel', function () {
-        if (clrTimer) clearTimeout(clrTimer);
-        clrTimer = null;
-        clrLong = false;
-      });
-    }
   }
 
   bindUnit(captUnit, captCtx);
@@ -356,20 +344,36 @@
 
   let backspaceTimer = null;
   let backspaceLong = false;
+  const heldKeys = Object.create(null);
+
+  function keyName(ev) {
+    if (ev.key === 'Enter') return 'ENTER';
+    if (ev.key === 'Backspace') return 'CLR';
+    if (ev.key === 'Delete') return 'DEL';
+    if (ev.key === 'PageUp') return 'PREV';
+    if (ev.key === 'PageDown') return 'NEXT';
+    if (ev.key === ' ') return 'SP';
+    if (ev.key.length === 1) {
+      const ch = ev.key.toUpperCase();
+      if (/^[A-Z0-9]$/.test(ch)) return ch;
+      if (ch === '/') return 'SLASH';
+      if (ch === '.') return 'DOT';
+      if (ch === '+' || ch === '-') return 'PLUSMINUS';
+    }
+    return '';
+  }
 
   window.addEventListener('keydown', function (ev) {
     if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) return;
     if (ev.repeat && ev.key !== 'Backspace') return;
-    const which = both ? activeSide : side;
+    const name = keyName(ev);
+    if (!name) return;
+    ev.preventDefault();
 
-    if (ev.key === 'Enter') {
-      sendEvent('ENTER', which);
-      flash('ENTER');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'Backspace') {
+    if (name === 'CLR') {
       if (!ev.repeat && !backspaceTimer) {
+        limPlayKeyDown();
+        heldKeys.CLR = true;
         backspaceLong = false;
         backspaceTimer = setTimeout(function () {
           backspaceTimer = null;
@@ -378,59 +382,37 @@
           flash('CLR');
         }, 550);
       }
-      ev.preventDefault();
       return;
     }
-    if (ev.key === 'Delete') {
-      sendEvent('DEL', which);
-      flash('DEL');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'PageUp') {
-      sendEvent('PREV', which);
-      flash('PREV');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'PageDown') {
-      sendEvent('NEXT', which);
-      flash('NEXT');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === ' ') {
-      sendEvent('SP', which);
-      flash('SP');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key.length === 1) {
-      const ch = ev.key.toUpperCase();
-      let name = null;
-      if (/^[A-Z0-9]$/.test(ch)) name = ch;
-      else if (ch === '/') name = 'SLASH';
-      else if (ch === '.') name = 'DOT';
-      else if (ch === '+' || ch === '-') name = 'PLUSMINUS';
-      if (name) {
-        sendEvent(name, which);
-        flash(name);
-        ev.preventDefault();
-      }
-    }
+
+    if (heldKeys[name]) return;
+    heldKeys[name] = true;
+    limPlayKeyDown();
+    flash(name);
   });
 
   window.addEventListener('keyup', function (ev) {
-    if (ev.key !== 'Backspace') return;
-    if (backspaceTimer) {
-      clearTimeout(backspaceTimer);
-      backspaceTimer = null;
-      if (!backspaceLong) {
-        sendEvent('CLR', both ? activeSide : side);
-        flash('CLR');
+    const name = keyName(ev);
+    if (!name) return;
+    if (name === 'CLR') {
+      if (!heldKeys.CLR) return;
+      delete heldKeys.CLR;
+      limPlayKeyUp();
+      if (backspaceTimer) {
+        clearTimeout(backspaceTimer);
+        backspaceTimer = null;
+        if (!backspaceLong) {
+          sendEvent('CLR', both ? activeSide : side);
+          flash('CLR');
+        }
       }
+      backspaceLong = false;
+      return;
     }
-    backspaceLong = false;
+    if (!heldKeys[name]) return;
+    delete heldKeys[name];
+    limPlayKeyUp();
+    sendEvent(name, both ? activeSide : side);
   });
 
   connect();

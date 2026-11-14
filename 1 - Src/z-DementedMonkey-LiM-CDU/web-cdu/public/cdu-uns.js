@@ -69,19 +69,6 @@
   const captCtx = { screenEl: screenEl, rowEls: rowEls, letterEls: letterEls };
 
   const WS_PORT = Number(window.UNS1_WS_PORT) || 8088;
-  const clickSound = new Audio('button-click.wav?v=20260921-2');
-  clickSound.preload = 'auto';
-  clickSound.volume = limClickVolume();
-
-  function playClick() {
-    try {
-      const n = clickSound.cloneNode();
-      n.volume = clickSound.volume;
-      n.play().catch(function () { /* autoplay policy — first real click unlocks */ });
-    } catch {
-      // ignore
-    }
-  }
 
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -260,7 +247,6 @@
   }
 
   function sendEvent(name, which) {
-    playClick();
     if (!socket || socket.readyState !== WebSocket.OPEN || !name) {
       return;
     }
@@ -313,58 +299,72 @@
     setTimeout(connect, delay);
   }
 
-  document.addEventListener('click', function (ev) {
-    const sideBtn = ev.target.closest && ev.target.closest('[data-side]');
-    if (sideBtn && sideBar && sideBar.contains(sideBtn)) {
-      const value = sideBtn.getAttribute('data-side');
-      setSide(value === 'both' ? 'both' : Number(value));
-      return;
+  if (sideBar) {
+    sideBar.querySelectorAll('[data-side]').forEach(function (sideBtn) {
+      sideBtn.addEventListener('click', function () {
+        const value = sideBtn.getAttribute('data-side');
+        setSide(value === 'both' ? 'both' : Number(value));
+      });
+    });
+  }
+
+  document.querySelectorAll('[data-key]').forEach(function (btn) {
+    const key = btn.getAttribute('data-key');
+    let held = false;
+    btn.addEventListener('pointerdown', function (ev) {
+      if (ev.button != null && ev.button !== 0) return;
+      limPlayKeyDown();
+      const unit = btn.closest('.unit');
+      const which = dual && both && unit ? Number(unit.getAttribute('data-panel') || 1) : (dual ? side : 1);
+      activeSide = which;
+      held = true;
+      try { btn.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
+      btn.classList.add('down');
+    });
+    function release() {
+      if (!held) return;
+      held = false;
+      limPlayKeyUp();
+      btn.classList.remove('down');
+      const unit = btn.closest('.unit');
+      const which = dual && both && unit ? Number(unit.getAttribute('data-panel') || 1) : (dual ? side : 1);
+      sendEvent(key, which);
     }
-    const btn = ev.target.closest && ev.target.closest('[data-key]');
-    if (!btn) return;
-    const unit = btn.closest('.unit');
-    const which = dual && both && unit ? Number(unit.getAttribute('data-panel') || 1) : (dual ? side : 1);
-    activeSide = which;
-    sendEvent(btn.getAttribute('data-key'), which);
+    btn.addEventListener('pointerup', release);
+    btn.addEventListener('pointercancel', release);
   });
 
-  window.addEventListener('keydown', function (ev) {
-    if (ev.repeat) {
-      return;
-    }
-    if (ev.key === 'Enter') {
-      sendEvent('ENTER');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'Backspace') {
-      sendEvent('BACK');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'PageUp') {
-      sendEvent('PREVPAGE');
-      ev.preventDefault();
-      return;
-    }
-    if (ev.key === 'PageDown') {
-      sendEvent('NEXTPAGE');
-      ev.preventDefault();
-      return;
-    }
+  const heldKeys = Object.create(null);
+
+  function keyName(ev) {
+    if (ev.key === 'Enter') return 'ENTER';
+    if (ev.key === 'Backspace') return 'BACK';
+    if (ev.key === 'PageUp') return 'PREVPAGE';
+    if (ev.key === 'PageDown') return 'NEXTPAGE';
     if (ev.key.length === 1) {
       const ch = ev.key.toUpperCase();
-      if (/^[A-Z0-9./]$/.test(ch) || ch === '+' || ch === '-') {
-        if (ch === '+' || ch === '-') {
-          sendEvent('PLUSMINUS');
-        } else if (ch === '.') {
-          sendEvent('DOT');
-        } else {
-          sendEvent(ch);
-        }
-        ev.preventDefault();
-      }
+      if (ch === '+' || ch === '-') return 'PLUSMINUS';
+      if (ch === '.') return 'DOT';
+      if (/^[A-Z0-9/]$/.test(ch)) return ch;
     }
+    return '';
+  }
+
+  window.addEventListener('keydown', function (ev) {
+    if (ev.repeat) return;
+    const name = keyName(ev);
+    if (!name || heldKeys[name]) return;
+    heldKeys[name] = true;
+    limPlayKeyDown();
+    ev.preventDefault();
+  });
+
+  window.addEventListener('keyup', function (ev) {
+    const name = keyName(ev);
+    if (!name || !heldKeys[name]) return;
+    delete heldKeys[name];
+    limPlayKeyUp();
+    sendEvent(name);
   });
 
   connect();

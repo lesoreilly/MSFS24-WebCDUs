@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <title>z-DementedMonkey-LiM-CDU</title>
   <script>
     (function () {
       var face = '';
@@ -24,37 +26,16 @@
         wt744: '747-400.html',
         '737': '737.html',
         wt737: '737.html',
-        uns: 'uns.html'
+        uns: 'uns.html',
+        atr: 'atr.html',
+        pmdg737: 'pmdg737.html',
+        pmdg777: 'pmdg777.html'
       };
-      if (map[face]) {
-        document.documentElement.style.visibility = 'hidden';
-        location.replace(map[face] + (location.search || ''));
-      }
-      // No face= query: stay on index so cdu.js can route from the first sim update
-      // (747 / 737 / UNS / WT21 faces).
+      // No sim yet: open the real WT21 CJ4 face. Dedicated faces load once the sim sends an update.
+      var page = map[face] || 'wt21.html';
+      location.replace(page + (location.search || ''));
     })();
   </script>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>z-DementedMonkey-LiM-CDU</title>
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="stylesheet" href="cdu.css?v=20261010-3" />
 </head>
-<body>
-  <div class="app" id="app">
-    <header class="toolbar">
-      <div class="plate" id="plate">CDU</div>
-      <span id="status" class="status">NO LINK</span>
-      <button type="button" id="face-toggle" hidden>4 IN</button>
-      <div class="side" role="group" aria-label="CDU side">
-        <button type="button" id="side-1" data-side="1">LEFT</button>
-        <button type="button" id="side-2" data-side="2">RIGHT</button>
-        <button type="button" id="side-both" data-side="both">BOTH</button>
-      </div>
-    </header>
-    <div class="stage" id="stage"></div>
-  </div>
-  <script>window.LIM_WS_PORT = __LIM_WS_PORT__;</script>
-  <script src="lim-route.js?v=20261025-ifly"></script>
-  <script src="cdu.js?v=20261025-ifly"></script>
-</body>
+<body></body>
 </html>

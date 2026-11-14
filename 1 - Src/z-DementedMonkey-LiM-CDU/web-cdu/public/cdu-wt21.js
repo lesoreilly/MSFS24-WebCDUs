@@ -73,18 +73,6 @@
   const foCtx = buildScreen(foUnit.querySelector('.screen'));
 
   const WS_PORT = Number(window.LIM_WS_PORT) || 8088;
-  const clickSound = new Audio('button-click.wav?v=20260921-2');
-  clickSound.preload = 'auto';
-  clickSound.volume = limClickVolume();
-
-  function playClick() {
-    try {
-      const n = clickSound.cloneNode();
-      n.volume = clickSound.volume;
-      n.play().catch(function () { /* first gesture unlocks audio */ });
-    } catch (_) { /* ignore */ }
-  }
-
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = location.hostname || '127.0.0.1';
@@ -283,7 +271,7 @@
     const params = new URLSearchParams(window.location.search);
     params.set('face', face);
     params.set('screen', both ? 'both' : String(side));
-    const page = face === 'c90' ? 'c90.html' : face === 'p180' ? 'p180.html' : face === 'hawker' ? 'hawker.html' : face === 'c750' ? 'c750.html' : (face === 'cj4' ? 'wt21.html' : 'index.html');
+    const page = face === 'c90' ? 'c90.html' : face === 'p180' ? 'p180.html' : face === 'hawker' ? 'hawker.html' : face === 'c750' ? 'c750.html' : 'wt21.html';
     window.location.replace(page + '?' + params.toString());
   }
 
@@ -319,7 +307,6 @@
   }
 
   function sendEvent(name, which) {
-    playClick();
     const target = which || activeSide;
     if (!socket || socket.readyState !== WebSocket.OPEN || !name) return;
     socket.send('event:' + PROTOCOL + ':' + target + ':' + name);
@@ -394,35 +381,48 @@
     paintKnob(unit, Number(storedBrt));
     unit.querySelectorAll('[data-key]').forEach(function (btn) {
       const key = btn.getAttribute('data-key');
-      if (key === 'CLR' || key === 'BRT' || key === 'DIM') return;
-      btn.addEventListener('click', function () {
-        activeSide = panelSide(unit);
-        sendEvent(key, activeSide);
-      });
-    });
-    const clr = unit.querySelector('[data-key="CLR"]');
-    let timer = null;
-    let long = false;
-    if (clr) {
-      clr.addEventListener('pointerdown', function (ev) {
+      let held = false;
+      let timer = null;
+      let long = false;
+      btn.addEventListener('pointerdown', function (ev) {
         if (ev.button != null && ev.button !== 0) return;
-        long = false;
+        limPlayKeyDown();
         activeSide = panelSide(unit);
-        timer = setTimeout(function () {
-          long = true;
-          sendEvent('CLR_LONG', panelSide(unit));
-        }, 650);
+        held = true;
+        try { btn.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
+        btn.classList.add('down');
+        if (key === 'CLR') {
+          long = false;
+          timer = setTimeout(function () {
+            long = true;
+            sendEvent('CLR_LONG', panelSide(unit));
+          }, 650);
+        }
       });
-      clr.addEventListener('pointerup', function () {
-        clearTimeout(timer);
-        if (!long) sendEvent('CLR', panelSide(unit));
-      });
-      clr.addEventListener('pointercancel', function () { clearTimeout(timer); });
-    }
-    const brt = unit.querySelector('[data-key="BRT"]');
-    const dim = unit.querySelector('[data-key="DIM"]');
-    if (brt) brt.addEventListener('click', function () { applyBrt(unit, 8); });
-    if (dim) dim.addEventListener('click', function () { applyBrt(unit, -8); });
+      function release() {
+        if (!held) return;
+        held = false;
+        limPlayKeyUp();
+        btn.classList.remove('down');
+        if (key === 'BRT') {
+          applyBrt(unit, 8);
+          return;
+        }
+        if (key === 'DIM') {
+          applyBrt(unit, -8);
+          return;
+        }
+        if (key === 'CLR') {
+          clearTimeout(timer);
+          if (!long) sendEvent('CLR', panelSide(unit));
+          long = false;
+          return;
+        }
+        sendEvent(key, panelSide(unit));
+      }
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+    });
   }
 
   bindUnit(captUnit);
@@ -432,20 +432,36 @@
   bothBtn.addEventListener('click', function () { setSide('both'); });
   setSide(both ? 'both' : side);
 
-  window.addEventListener('keydown', function (ev) {
-    if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) return;
-    if (ev.repeat && ev.key !== 'Backspace') return;
-    const which = both ? activeSide : side;
+  const heldKeys = Object.create(null);
+
+  function keyName(ev) {
     const map = {
       Enter: 'EXEC', Backspace: 'CLR', ' ': 'SP',
       '/': 'DIV', '.': 'DOT', '+': 'PLUSMINUS', '-': 'PLUSMINUS',
       PageUp: 'PREVPAGE', PageDown: 'NEXTPAGE'
     };
-    const name = map[ev.key] || (/^[a-z0-9]$/i.test(ev.key) ? ev.key.toUpperCase() : '');
-    if (!name) return;
-    ev.preventDefault();
-    sendEvent(name, which);
+    if (map[ev.key]) return map[ev.key];
+    if (/^[a-z0-9]$/i.test(ev.key)) return ev.key.toUpperCase();
+    return '';
+  }
+
+  window.addEventListener('keydown', function (ev) {
+    if (ev.target && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) return;
+    if (ev.repeat) return;
+    const name = keyName(ev);
+    if (!name || heldKeys[name]) return;
+    heldKeys[name] = true;
+    limPlayKeyDown();
     flash(name);
+    ev.preventDefault();
+  });
+
+  window.addEventListener('keyup', function (ev) {
+    const name = keyName(ev);
+    if (!name || !heldKeys[name]) return;
+    delete heldKeys[name];
+    limPlayKeyUp();
+    sendEvent(name, both ? activeSide : side);
   });
 
   connect();

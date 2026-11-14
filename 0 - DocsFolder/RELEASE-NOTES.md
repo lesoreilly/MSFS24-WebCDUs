@@ -1,3 +1,13 @@
+# Release 2.0.5
+
+The Community package is `z-DementedMonkey-LiM-CDU-v2.0.5`.
+
+## What is new in 2.0.5
+
+- Every key plays `ButtonPress.wav` on press and `ButtonRelease.wav` on release, including a held CLR.
+- `cdu-server.cfg` `clickStyle` can be `press-release` (default) or `single`. With `single`, `clickSound` picks `click`, `press`, or `release`.
+- Opening the hub URL loads the real WT21 CJ4 face. The old generic index layout is gone.
+
 # Release 2.0.4
 
 The Community package is `z-DementedMonkey-LiM-CDU-v2.0.4`.
@@ -75,7 +85,7 @@ The LiM Charts plugin stays. It installs beside this package and the two run tog
 
 ## Install
 
-Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.4`.
+Download the MSFS 2024 zip or the MSFS 2020 zip from this release. Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.5`.
 
 Double-click `web-cdu/start-web-cdu.cmd` and leave that window open. Open the URL it prints. Press Ctrl+C in that window to stop the hub. The CDU screen stays dark until the unit in the aircraft has power. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 

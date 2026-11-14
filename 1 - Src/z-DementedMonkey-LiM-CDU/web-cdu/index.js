@@ -46,6 +46,8 @@ function readCfg(file) {
     winCtrlAircraft: '',
     winCtrlExporter: 'auto',
     clickVolume: 45,
+    clickStyle: 'press-release',
+    clickSound: 'click',
   };
   if (!fs.existsSync(file)) {
     return cfg;
@@ -67,8 +69,25 @@ function readCfg(file) {
     if (key === 'winCtrlAircraft') cfg.winCtrlAircraft = value;
     if (key === 'winCtrlExporter' || key === 'winCtrlExporters') cfg.winCtrlExporter = value;
     if (key === 'clickVolume') cfg.clickVolume = Number(value);
+    if (key === 'clickStyle' || key === 'audioStyle') cfg.clickStyle = value;
+    if (key === 'clickSound' || key === 'audioSound') cfg.clickSound = value;
   }
   return cfg;
+}
+
+function clickStyleOr(value, fallback) {
+  const text = String(value == null ? '' : value).trim().toLowerCase().replace(/_/g, '-');
+  if (text === 'press-release' || text === 'pressrelease' || text === 'press') return 'press-release';
+  if (text === 'single' || text === 'one' || text === 'click') return 'single';
+  return fallback;
+}
+
+function clickSoundOr(value, fallback) {
+  const text = String(value == null ? '' : value).trim().toLowerCase();
+  if (text === 'click' || text === 'button-click' || text === 'buttonclick') return 'click';
+  if (text === 'press' || text === 'buttonpress' || text === 'button-press') return 'press';
+  if (text === 'release' || text === 'buttonrelease' || text === 'button-release') return 'release';
+  return fallback;
 }
 
 function relayHostOr(value, fallback) {
@@ -101,6 +120,8 @@ let observedAircraft = '';
 let observedLivery = '';
 let winCtrlExporter = String(process.env.LIM_WINCTRL_EXPORTER || cfg.winCtrlExporter || '').trim();
 let clickVolume = percentOr(process.env.LIM_CLICK_VOLUME, cfg.clickVolume);
+let clickStyle = clickStyleOr(process.env.LIM_CLICK_STYLE || cfg.clickStyle, 'press-release');
+let clickSound = clickSoundOr(process.env.LIM_CLICK_SOUND || cfg.clickSound, 'click');
 let exporterChildren = [];
 let exporterLabels = [];
 let exporterHost = null;
@@ -117,13 +138,18 @@ for (const arg of process.argv.slice(2)) {
   else if (arg.startsWith('--winctrl-aircraft=')) winCtrlAircraft = arg.split('=').slice(1).join('=') || winCtrlAircraft;
   else if (arg.startsWith('--winctrl-exporter=')) winCtrlExporter = arg.split('=').slice(1).join('=') || winCtrlExporter;
   else if (arg.startsWith('--click-volume=')) clickVolume = percentOr(arg.split('=')[1], clickVolume);
+  else if (arg.startsWith('--click-style=')) clickStyle = clickStyleOr(arg.split('=')[1], clickStyle);
+  else if (arg.startsWith('--click-sound=')) clickSound = clickSoundOr(arg.split('=')[1], clickSound);
   else if (arg === '--help' || arg === '-h') {
     console.log('node index.js [--http-port=N] [--sim-port=N] [--relay-port=N] [--relay-ip=ADDR]');
     console.log('             [--winctrl-port=N] [--winctrl-exporter=auto]');
+    console.log('             [--click-volume=N] [--click-style=press-release|single] [--click-sound=click|press|release]');
     console.log('relay-port=0 disables the hardware relay.');
     console.log('winctrl-port=0 disables WinCtrl ingest. The WinCtrl port is 8320.');
     console.log('winctrl-exporter=auto follows the loaded aircraft. off turns readers off.');
     console.log('click-volume=0 to 100 sets the button click loudness.');
+    console.log('click-style=press-release plays ButtonPress then ButtonRelease. single plays one file.');
+    console.log('click-sound picks the single-mode file: click, press, or release.');
     console.log('SPAD listens on relay-ip:relay-port. This hub connects out and speaks as the plane.');
     process.exit(0);
   } else {
@@ -981,7 +1007,9 @@ async function main() {
       if (ext === '.html' || ext === '.js') {
         body = Buffer.from(String(data)
           .replace(/__LIM_WS_PORT__/g, String(simPort))
-          .replace(/__LIM_CLICK_VOLUME__/g, (clickVolume / 100).toFixed(2)));
+          .replace(/__LIM_CLICK_VOLUME__/g, (clickVolume / 100).toFixed(2))
+          .replace(/__LIM_CLICK_STYLE__/g, clickStyle)
+          .replace(/__LIM_CLICK_SOUND__/g, clickSound));
       }
       const headers = { 'Content-Type': MIME[ext] || 'application/octet-stream' };
       if (ext === '.html' || ext === '.css' || ext === '.js') headers['Cache-Control'] = 'no-store';

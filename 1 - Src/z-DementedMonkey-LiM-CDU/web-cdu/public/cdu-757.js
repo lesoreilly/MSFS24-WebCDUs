@@ -68,17 +68,6 @@
   const foCtx = buildScreen(foUnit.querySelector('.screen'));
 
   const WS_PORT = Number(window.B747_WS_PORT) || 8088;
-  const clickSound = new Audio('button-click.wav?v=20260921-2');
-  clickSound.preload = 'auto';
-  clickSound.volume = limClickVolume();
-
-  function playClick() {
-    try {
-      const n = clickSound.cloneNode();
-      n.volume = clickSound.volume;
-      n.play().catch(function () { /* first gesture unlocks audio */ });
-    } catch (_) { /* ignore */ }
-  }
 
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -284,7 +273,7 @@
       let held = false;
       btn.addEventListener('pointerdown', function (ev) {
         if (ev.button != null && ev.button !== 0) return;
-        playClick();
+        limPlayKeyDown();
         activeSide = panelSide(unit);
         held = true;
         try { btn.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
@@ -294,6 +283,7 @@
       function release() {
         if (!held) return;
         held = false;
+        limPlayKeyUp();
         btn.classList.remove('down');
         sendPhase(key, 'up', panelSide(unit));
       }
@@ -337,7 +327,7 @@
     }
     const which = both ? activeSide : side;
     heldKeys[name] = true;
-    playClick();
+    limPlayKeyDown();
     sendPhase(name, 'down', which);
     flash(name);
     ev.preventDefault();
@@ -347,6 +337,7 @@
     const name = keyName(ev);
     if (!name || !heldKeys[name]) return;
     delete heldKeys[name];
+    limPlayKeyUp();
     sendPhase(name, 'up', both ? activeSide : side);
   });
 

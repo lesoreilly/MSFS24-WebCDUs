@@ -20,9 +20,9 @@ This package replaces the older Demented Monkey CDU mods and the separate LiM 74
 
 The LiM Charts plugin stays. It installs beside this package and the two run together.
 
-Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.4`. Double-click `web-cdu/start-web-cdu.cmd` and leave that window open while you fly. Press Ctrl+C in that window to stop the hub. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
+Use the MSFS 2024 zip in the MSFS 2024 Community folder. Use the MSFS 2020 zip in the MSFS 2020 Community folder. The folder inside either zip is `z-DementedMonkey-LiM-CDU-v2.0.5`. Double-click `web-cdu/start-web-cdu.cmd` and leave that window open while you fly. Press Ctrl+C in that window to stop the hub. If Node.js is not already on the PC, that script downloads a portable copy into `web-cdu/runtime/` the first time and then starts the hub.
 
-The hub prints a local URL and a LAN URL. Open one of them in a browser on this PC or on a tablet on the same network. The screen stays dark until the CDU in the aircraft has power.
+The hub prints a local URL and a LAN URL. Open one of them in a browser on this PC or on a tablet on the same network. With no aircraft connected, that URL opens the WT21 CJ4 face so you can test the keys. When the sim sends a screen update, the page switches to the matching face. The screen stays dark until the CDU in the aircraft has power.
 
 After you replace the Community package, leave the flight and start it again so the sim loads the new scripts. A browser refresh is enough for a face change that is only HTML or CSS. Restart `start-web-cdu.cmd` after you edit `cdu-server.cfg`. Two hubs cannot share port 8088.
 
@@ -39,6 +39,8 @@ Defaults are in `web-cdu/cdu-server.cfg`:
 | `winCtrlPort` | 8320 | MobiFlight Format WinCtrl port. `0` turns it off |
 | `winCtrlExporter` | `auto` | `auto` follows the loaded aircraft. `off` turns the readers off |
 | `clickVolume` | 45 | Button click loudness, 0 to 100. 0 is silent. 100 is as loud as the recording |
+| `clickStyle` | `press-release` | `press-release` plays ButtonPress on every key down and ButtonRelease on every key up. `single` plays one file on press |
+| `clickSound` | `click` | Used when `clickStyle=single`: `click` (`button-click.wav`), `press`, or `release` |
 
 The sim and the browser connect in to `simPort`. On the aircraft WEBSOCKETS page, set the IP to `127.0.0.1` and the port to `simPort` when the sim and the hub are on the same PC.
 

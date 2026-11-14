@@ -82,11 +82,8 @@
     const here = currentPage();
     if (here === page) return false;
 
-    // index.html uses cdu.js for its own routing — do not fight it.
-    if (here === 'index.html') return false;
-
-    // Hub maps "/" to a face page without changing the URL, so `here` can be "".
-    // Still navigate to the dedicated page (e.g. 747.html) so protocol matches.
+    // Hub maps "/" through index.html to a face. Empty path still navigates
+    // to the dedicated page (e.g. 747.html) so protocol matches.
     const params = new URLSearchParams(location.search);
     const screen = screenParam(opts.screen);
     if (screen) params.set('screen', screen);
@@ -99,11 +96,89 @@
   global.LIM_pageForProtocol = pageForProtocol;
   global.LIM_is737FamilyProtocol = is737FamilyProtocol;
   global.LIM_maybeRedirect = maybeRedirect;
-  global.limClickVolume = function () {
+
+  function limClickVolume() {
     var n = Number('__LIM_CLICK_VOLUME__');
     if (!isFinite(n)) return 0.45;
     if (n < 0) return 0;
     if (n > 1) return 1;
     return n;
+  }
+
+  function limClickStyle() {
+    var text = String('__LIM_CLICK_STYLE__').trim().toLowerCase().replace(/_/g, '-');
+    if (text === 'single' || text === 'one' || text === 'click') return 'single';
+    return 'press-release';
+  }
+
+  function limClickSoundName() {
+    var text = String('__LIM_CLICK_SOUND__').trim().toLowerCase();
+    if (text === 'press' || text === 'buttonpress' || text === 'button-press') return 'press';
+    if (text === 'release' || text === 'buttonrelease' || text === 'button-release') return 'release';
+    return 'click';
+  }
+
+  var SOUND_URL = {
+    click: 'button-click.wav?v=20261114-1',
+    press: 'ButtonPress.wav?v=20261114-1',
+    release: 'ButtonRelease.wav?v=20261114-1',
   };
+  var POOL_SIZE = 4;
+  var soundPools = Object.create(null);
+  var soundIx = Object.create(null);
+
+  function soundPool(name) {
+    var key = SOUND_URL[name] ? name : 'click';
+    if (soundPools[key]) return soundPools[key];
+    var url = SOUND_URL[key];
+    var pool = [];
+    for (var i = 0; i < POOL_SIZE; i++) {
+      var clip = new Audio(url);
+      clip.preload = 'auto';
+      clip.volume = limClickVolume();
+      pool.push(clip);
+    }
+    soundPools[key] = pool;
+    soundIx[key] = 0;
+    return pool;
+  }
+
+  function playNamed(name) {
+    var key = SOUND_URL[name] ? name : 'click';
+    var pool = soundPool(key);
+    var ix = soundIx[key] || 0;
+    var clip = pool[ix];
+    soundIx[key] = (ix + 1) % pool.length;
+    if (!clip) return;
+    clip.volume = limClickVolume();
+    try { clip.currentTime = 0; } catch (_e) { /* not loaded yet */ }
+    var pending = clip.play();
+    if (pending && pending.catch) pending.catch(function () { /* gesture unlocks audio */ });
+  }
+
+  function limPlayKeyDown() {
+    if (limClickStyle() === 'single') playNamed(limClickSoundName());
+    else playNamed('press');
+  }
+
+  function limPlayKeyUp() {
+    if (limClickStyle() === 'single') return;
+    playNamed('release');
+  }
+
+  /** One-shot for faces that still fire on click or keydown without a matching up. */
+  function limPlayClick() {
+    if (limClickStyle() === 'single') {
+      playNamed(limClickSoundName());
+      return;
+    }
+    playNamed('press');
+    setTimeout(function () { playNamed('release'); }, 45);
+  }
+
+  global.limClickVolume = limClickVolume;
+  global.limClickStyle = limClickStyle;
+  global.limPlayKeyDown = limPlayKeyDown;
+  global.limPlayKeyUp = limPlayKeyUp;
+  global.limPlayClick = limPlayClick;
 })(window);

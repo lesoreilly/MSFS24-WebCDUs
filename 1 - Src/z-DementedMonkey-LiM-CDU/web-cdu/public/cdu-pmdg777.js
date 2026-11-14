@@ -71,24 +71,6 @@
   const foCtx = buildScreen(foUnit.querySelector('.screen'));
 
   const WS_PORT = Number(window.LIM_WS_PORT) || 8088;
-  const CLICK_URL = 'button-click.wav?v=20260921-2';
-  const clickPool = [];
-  for (let i = 0; i < 4; i++) {
-    const clip = new Audio(CLICK_URL);
-    clip.preload = 'auto';
-    clip.volume = limClickVolume();
-    clickPool.push(clip);
-  }
-  let clickIx = 0;
-
-  function playClick() {
-    const clip = clickPool[clickIx];
-    clickIx = (clickIx + 1) % clickPool.length;
-    if (!clip) return;
-    try { clip.currentTime = 0; } catch (_) { /* not loaded yet */ }
-    const pending = clip.play();
-    if (pending && pending.catch) pending.catch(function () { /* gesture unlocks audio */ });
-  }
 
   function wsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -311,7 +293,7 @@
       let held = false;
       btn.addEventListener('pointerdown', function (ev) {
         if (ev.button != null && ev.button !== 0) return;
-        playClick();
+        limPlayKeyDown();
         activeSide = panelSide(unit);
         held = true;
         try { btn.setPointerCapture(ev.pointerId); } catch (_) { /* ignore */ }
@@ -321,6 +303,7 @@
       function release() {
         if (!held) return;
         held = false;
+        limPlayKeyUp();
         btn.classList.remove('down');
         sendPhase(key, 'up', panelSide(unit));
       }
@@ -362,7 +345,7 @@
     const name = keyName(ev);
     if (!name || heldKeys[name]) return;
     heldKeys[name] = true;
-    playClick();
+    limPlayKeyDown();
     const which = both ? activeSide : side;
     sendPhase(name, 'down', which);
     flash(name);
@@ -373,6 +356,7 @@
     const name = keyName(ev);
     if (!name || !heldKeys[name]) return;
     delete heldKeys[name];
+    limPlayKeyUp();
     sendPhase(name, 'up', both ? activeSide : side);
   });
 
